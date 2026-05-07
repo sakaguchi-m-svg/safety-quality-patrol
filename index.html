@@ -340,57 +340,57 @@ html, body {
 /* PDF RENDER AREA — hidden, used by html2canvas */
 #pdf-render {
   position: absolute; left: -10000px; top: 0;
-  width: 1100px; background: #fff; padding: 24px;
+  width: 1100px; background: #fff; padding: 14px;
   font-family: "Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
   color: #000;
 }
 #pdf-render .pdf-header {
-  display: grid; grid-template-columns: 280px 70px 1fr; gap: 8px;
-  margin-bottom: 12px; align-items: stretch;
+  display: grid; grid-template-columns: 280px 70px 1fr; gap: 6px;
+  margin-bottom: 8px; align-items: stretch;
 }
 #pdf-render .pdf-title {
-  border: 1.5px solid #000; padding: 12px 16px; font-size: 18px; font-weight: 700;
+  border: 1.5px solid #000; padding: 8px 12px; font-size: 16px; font-weight: 700;
   display: flex; align-items: center;
 }
 #pdf-render .pdf-leader {
   border: 1px solid #000; display: grid; grid-template-rows: auto 1fr;
   text-align: center;
 }
-#pdf-render .pdf-leader .lh { font-size: 11px; border-bottom: 1px solid #000; padding: 2px; }
-#pdf-render .pdf-leader .lv { font-size: 13px; padding: 6px; }
+#pdf-render .pdf-leader .lh { font-size: 10px; border-bottom: 1px solid #000; padding: 2px; }
+#pdf-render .pdf-leader .lv { font-size: 12px; padding: 4px; }
 #pdf-render .pdf-meta {
   border: 1px solid #000; display: grid; grid-template-columns: 60px 1fr;
-  font-size: 11px;
+  font-size: 10px;
 }
 #pdf-render .pdf-meta div {
   border-bottom: 1px solid #000; border-right: 1px solid #000;
-  padding: 4px 6px; display: flex; align-items: center;
+  padding: 3px 5px; display: flex; align-items: center;
 }
 #pdf-render .pdf-meta div:nth-child(2n) { border-right: none; }
 #pdf-render .pdf-meta div:nth-child(5),
 #pdf-render .pdf-meta div:nth-child(6) { border-bottom: none; }
 
 #pdf-render table {
-  width: 100%; border-collapse: collapse; font-size: 11px;
+  width: 100%; border-collapse: collapse; font-size: 10.5px;
 }
 #pdf-render th, #pdf-render td {
-  border: 1px solid #000; padding: 4px 6px; vertical-align: middle;
+  border: 1px solid #000; padding: 2px 5px; vertical-align: middle; line-height: 1.25;
 }
-#pdf-render th { background: #f0f0f0; font-weight: 600; text-align: center; }
-#pdf-render .col-cat { width: 60px; text-align: center; writing-mode: vertical-rl; }
-#pdf-render .col-no { width: 36px; text-align: center; }
+#pdf-render th { background: #f0f0f0; font-weight: 600; text-align: center; padding: 4px 5px; }
+#pdf-render .col-cat { width: 56px; text-align: center; writing-mode: vertical-rl; font-size: 11px; }
+#pdf-render .col-no { width: 32px; text-align: center; }
 #pdf-render .col-item { width: 360px; }
-#pdf-render .col-eval { width: 50px; text-align: center; font-size: 16px; font-weight: 700; }
-#pdf-render .col-rate { width: 60px; text-align: center; font-size: 10px; }
-#pdf-render .col-note { font-size: 10px; }
+#pdf-render .col-eval { width: 48px; text-align: center; font-size: 15px; font-weight: 700; }
+#pdf-render .col-rate { width: 60px; text-align: center; font-size: 9px; }
+#pdf-render .col-note { font-size: 9px; }
 #pdf-render .ev-ok { color: #1b5e20; }
 #pdf-render .ev-ng { color: #b71c1c; }
 #pdf-render .pdf-summary {
-  margin-top: 12px; padding: 10px; border: 1.5px solid #000;
-  font-size: 11px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px;
+  margin-top: 8px; padding: 6px 10px; border: 1.5px solid #000;
+  font-size: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;
 }
 #pdf-render .pdf-summary div { text-align: center; }
-#pdf-render .pdf-summary .v { font-size: 16px; font-weight: 700; }
+#pdf-render .pdf-summary .v { font-size: 14px; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -1405,83 +1405,101 @@ function buildPdfHtml() {
       <div><div>不適 ×</div><div class="v" style="color:#b71c1c">${ng}</div><div style="font-size:9px;color:#555">Não Conforme</div></div>
       <div><div>未記入</div><div class="v" style="color:#555">${pe}</div><div style="font-size:9px;color:#555">Pendente</div></div>
     </div>
-    ${buildPdfPhotosSection()}
   `;
 }
 
-function buildPdfPhotosSection() {
-  // gather NG items that have photos
+/* Returns an array of HTML strings — one per NG item with photos.
+   Each string is meant to be rendered on its own PDF page. */
+function buildPdfPhotoCards() {
   const withPhotos = itemFlat
     .map((f, idx) => ({ ...f, idx }))
     .filter(f => evals[f.idx] === 'ng' && photos[f.idx] && photos[f.idx].length > 0);
-  if (withPhotos.length === 0) return '';
-
-  let html = `<div style="margin-top:16px; padding-top:10px; border-top:2px solid #b71c1c;">
-    <h3 style="font-size:13px; color:#b71c1c; margin:0 0 10px;">📷 写真エビデンス / Evidências Fotográficas (${withPhotos.length})</h3>`;
-  withPhotos.forEach(f => {
-    html += `<div style="margin-bottom:14px; page-break-inside:avoid;">
-      <div style="font-size:11px; font-weight:600; margin-bottom:4px;">
-        <span style="background:#b71c1c; color:#fff; padding:2px 6px; border-radius:3px; margin-right:6px;">No.${f.idx+1}</span>
-        ${escapeHtml(f.jp)}
-      </div>
-      <div style="font-size:10px; color:#555; margin-bottom:6px;">${escapeHtml(f.pt)}</div>
-      ${notes[f.idx] ? `<div style="font-size:10px; color:#444; font-style:italic; margin-bottom:6px;">📝 ${escapeHtml(notes[f.idx])}</div>` : ''}
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        ${photos[f.idx].map(src => `<img src="${src}" style="width:200px; height:150px; object-fit:cover; border:1px solid #999; border-radius:4px;">`).join('')}
-      </div>
-    </div>`;
+  return withPhotos.map((f, n) => {
+    const photoCount = photos[f.idx].length;
+    // photo size depends on count to keep them proportional on page
+    const w = photoCount === 1 ? 600 : photoCount === 2 ? 440 : 320;
+    const h = Math.round(w * 0.75);
+    return `
+      <div style="font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic',Meiryo,sans-serif; padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; margin-bottom:12px; border-bottom:2px solid #b71c1c;">
+          <h2 style="font-size:16px; margin:0; color:#b71c1c;">📷 写真エビデンス / Evidência Fotográfica</h2>
+          <span style="font-size:11px; color:#666;">${n+1} / ${withPhotos.length}</span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <span style="background:#b71c1c; color:#fff; padding:3px 9px; border-radius:4px; font-size:13px; font-weight:600; margin-right:8px;">No.${f.idx+1}</span>
+          <span style="font-size:14px; font-weight:600;">${escapeHtml(f.jp)}</span>
+        </div>
+        <div style="font-size:11px; color:#555; margin-bottom:8px;">${escapeHtml(f.pt)}</div>
+        ${notes[f.idx] ? `<div style="font-size:11px; color:#333; padding:8px 10px; background:#fffbe6; border-left:3px solid #fbc02d; margin-bottom:14px;">📝 ${escapeHtml(notes[f.idx])}</div>` : ''}
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+          ${photos[f.idx].map(src => `<img src="${src}" style="width:${w}px; height:${h}px; object-fit:cover; border:1px solid #999; border-radius:4px;">`).join('')}
+        </div>
+      </div>`;
   });
-  html += `</div>`;
-  return html;
 }
 
-async function renderPdfBlob() {
-  const html = buildPdfHtml();
+/* Capture #pdf-render to canvas after setting innerHTML. */
+async function captureToCanvas(html) {
   const target = document.getElementById('pdf-render');
   target.innerHTML = html;
-
-  // wait one frame for layout
+  // wait two frames so images and layout settle
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-  const canvas = await html2canvas(target, {
+  // also wait for any <img> inside to load
+  const imgs = target.querySelectorAll('img');
+  if (imgs.length) {
+    await Promise.all(Array.from(imgs).map(im => im.complete
+      ? Promise.resolve()
+      : new Promise(res => { im.onload = im.onerror = res; })));
+  }
+  return await html2canvas(target, {
     scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false
   });
-  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+}
 
-  const { jsPDF } = window.jspdf;
-  // A4 landscape — original sheet is landscape oriented
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+/* Add a canvas to the PDF, fitting within page bounds (no cropping).
+   If the canvas aspect is taller than the page, content scales down to fit. */
+function addCanvasAsPage(pdf, canvas, isFirstPage) {
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
   const margin = 6;
   const usableW = pageW - margin * 2;
-  const imgW = usableW;
-  const imgH = (canvas.height * imgW) / canvas.width;
+  const usableH = pageH - margin * 2;
 
-  // if it fits one page, single. else, split into pages.
-  if (imgH <= pageH - margin * 2) {
-    pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH);
+  const canvasAspect = canvas.width / canvas.height;
+  const pageAspect = usableW / usableH;
+
+  let imgW, imgH;
+  if (canvasAspect >= pageAspect) {
+    // wider than page → fit to width
+    imgW = usableW;
+    imgH = imgW / canvasAspect;
   } else {
-    // multi-page: slice the canvas
-    const pageCanvasH = (canvas.width * (pageH - margin * 2)) / usableW;
-    let y = 0;
-    let firstPage = true;
-    while (y < canvas.height) {
-      const sliceH = Math.min(pageCanvasH, canvas.height - y);
-      const slice = document.createElement('canvas');
-      slice.width = canvas.width;
-      slice.height = sliceH;
-      const ctx = slice.getContext('2d');
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, slice.width, slice.height);
-      ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-      const sliceData = slice.toDataURL('image/jpeg', 0.92);
-      const sliceImgH = (sliceH * imgW) / canvas.width;
-      if (!firstPage) pdf.addPage();
-      pdf.addImage(sliceData, 'JPEG', margin, margin, imgW, sliceImgH);
-      firstPage = false;
-      y += sliceH;
-    }
+    // taller than page → fit to height (scales down to avoid cropping)
+    imgH = usableH;
+    imgW = imgH * canvasAspect;
+  }
+
+  const x = margin + (usableW - imgW) / 2;
+  const y = margin; // top-aligned (looks better than vertically centered)
+
+  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+  if (!isFirstPage) pdf.addPage();
+  pdf.addImage(imgData, 'JPEG', x, y, imgW, imgH);
+}
+
+async function renderPdfBlob() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  // Page 1: main checklist (header + table + summary). Always fits one page.
+  const mainCanvas = await captureToCanvas(buildPdfHtml());
+  addCanvasAsPage(pdf, mainCanvas, true);
+
+  // Pages 2+: one page per NG item that has photos
+  const photoCards = buildPdfPhotoCards();
+  for (const cardHtml of photoCards) {
+    const cardCanvas = await captureToCanvas(cardHtml);
+    addCanvasAsPage(pdf, cardCanvas, false);
   }
 
   return pdf.output('blob');
