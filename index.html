@@ -672,19 +672,33 @@ const STORE_KEYS = {
 };
 const SYNC_URL_KEY = 'patrulha:syncUrl';
 const SYNC_AT_KEY = 'patrulha:syncedAt';
+
+/* ───────────────────────────────────────────────────────────
+ * URL padrão do Google Apps Script.
+ * Usada em qualquer aparelho que abrir o link sem ter
+ * configurado nada localmente. Para desativar o "auto-conectar",
+ * deixe esta string vazia ('').
+ * ─────────────────────────────────────────────────────────── */
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxF_bwHfSIhrX9WNpDsgCrqaODsUGYI5jei6JvlvC7uQzA3ouYxnC2_IS1SnLsVfJNz/exec';
+
 const DEFAULTS = {
   zone: ['A-1','A-2','B-1','B-2','C-1'],
   leader: [],
   inspector: []
 };
 
-function getSyncUrl() { return localStorage.getItem(SYNC_URL_KEY) || ''; }
+function getSyncUrl() {
+  return localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SYNC_URL || '';
+}
 function setSyncUrl(u) {
   if (u) localStorage.setItem(SYNC_URL_KEY, u);
   else localStorage.removeItem(SYNC_URL_KEY);
 }
 function getSyncedAt() { return localStorage.getItem(SYNC_AT_KEY); }
 function isSynced() { return !!getSyncUrl(); }
+function isUsingDefaultUrl() {
+  return !localStorage.getItem(SYNC_URL_KEY) && !!DEFAULT_SYNC_URL;
+}
 
 async function syncFromSheet(silent) {
   const url = getSyncUrl();
@@ -836,10 +850,17 @@ function renderSettings() {
   if (url) {
     syncPanel.classList.remove('disconnected');
     syncStatus.classList.remove('disconnected','error');
-    syncStatusText.innerHTML = `📡 接続中 / Conectado<br><span style="font-size:10px;font-family:monospace;word-break:break-all;">${escapeHtml(url.length > 60 ? url.slice(0,60)+'…' : url)}</span>`;
+    const usingDefault = isUsingDefaultUrl();
+    const badge = usingDefault
+      ? '<span style="background:#fff3e0;color:#e65100;font-size:10px;padding:2px 6px;border-radius:8px;margin-left:6px;">デフォルト / Padrão</span>'
+      : '<span style="background:#e3f2fd;color:#1976d2;font-size:10px;padding:2px 6px;border-radius:8px;margin-left:6px;">カスタム / Custom</span>';
+    syncStatusText.innerHTML = `📡 接続中 / Conectado ${badge}<br><span style="font-size:10px;font-family:monospace;word-break:break-all;">${escapeHtml(url.length > 60 ? url.slice(0,60)+'…' : url)}</span>`;
     syncStatusTs.textContent = fmtSyncTime(getSyncedAt());
     syncDisconnected.classList.add('hidden');
     syncConnected.classList.remove('hidden');
+    // Hide disconnect when using default — there's nothing local to clear
+    const btnDisconnect = document.getElementById('btnDisconnect');
+    if (btnDisconnect) btnDisconnect.style.display = usingDefault ? 'none' : '';
   } else {
     syncPanel.classList.add('disconnected');
     syncStatus.classList.add('disconnected');
