@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — 巡回チェック</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  background: #f0f2f5; color: #222;
+  -webkit-text-size-adjust: 100%;
+}
+.app { max-width: 1100px; margin: 0 auto; padding: 0 0 40px 0; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: linear-gradient(135deg,#1976d2,#1565c0);
+  color: #fff; padding: 14px 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.topbar h1 { font-size: 17px; margin: 0; font-weight: 600; }
+.topbar .sub { font-size: 11px; opacity: .85; margin-top: 2px; }
+.topbar .actions { display: flex; gap: 8px; }
+.topbar a, .topbar button {
+  background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4);
+  color: #fff; font-size: 12px; padding: 6px 12px; border-radius: 16px;
+  text-decoration: none; cursor: pointer; font-family: inherit;
+}
+
+/* SETUP SCREEN */
+.setup { padding: 32px 16px; text-align: center; }
+.setup h2 { font-size: 18px; margin: 0 0 6px; }
+.setup p { color: #666; font-size: 13px; margin: 4px 0 18px; }
+.setup input {
+  width: 100%; max-width: 500px; padding: 12px 14px;
+  border: 1px solid #cfd8dc; border-radius: 8px;
+  font-size: 14px; background: #fafafa; font-family: inherit;
+  margin-bottom: 12px;
+}
+.setup input:focus { outline: none; border-color: #1976d2; background: #fff; }
+.setup button {
+  background: #1976d2; color: #fff; border: none;
+  padding: 12px 24px; border-radius: 8px; font-size: 14px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+
+/* FILTERS */
+.filters {
+  background: #fff; padding: 12px 16px;
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: end;
+  border-bottom: 1px solid #e0e0e0;
+}
+.filter { display: flex; flex-direction: column; gap: 4px; }
+.filter label { font-size: 11px; color: #555; font-weight: 600; }
+.filter select, .filter input {
+  padding: 8px 10px; border: 1px solid #cfd8dc; border-radius: 6px;
+  font-size: 13px; background: #fafafa; font-family: inherit; min-width: 130px;
+}
+.filter select:focus, .filter input:focus { outline: none; border-color: #1976d2; background: #fff; }
+.btn-refresh {
+  background: #1976d2; color: #fff; border: none;
+  padding: 8px 14px; border-radius: 6px; font-size: 13px;
+  cursor: pointer; font-family: inherit; font-weight: 600;
+  height: 35px;
+}
+
+/* KPI CARDS */
+.kpis {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px; padding: 12px 16px;
+}
+.kpi {
+  background: #fff; border-radius: 10px; padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+  border-left: 4px solid #1976d2;
+}
+.kpi .lbl { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .5px; }
+.kpi .v { font-size: 26px; font-weight: 700; margin-top: 4px; color: #1976d2; }
+.kpi .sub { font-size: 11px; color: #888; margin-top: 2px; }
+.kpi.warn { border-left-color: #fb8c00; }
+.kpi.warn .v { color: #fb8c00; }
+.kpi.danger { border-left-color: #e53935; }
+.kpi.danger .v { color: #e53935; }
+.kpi.ok { border-left-color: #43a047; }
+.kpi.ok .v { color: #43a047; }
+
+/* CHARTS */
+.charts {
+  display: grid; grid-template-columns: 1fr; gap: 12px;
+  padding: 0 16px;
+}
+@media (min-width: 800px) { .charts { grid-template-columns: 1fr 1fr; } }
+.chart-card {
+  background: #fff; border-radius: 10px; padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.chart-card h3 { font-size: 13px; margin: 0 0 12px; color: #333; font-weight: 600; }
+.chart-card.full { grid-column: 1 / -1; }
+.chart-canvas-wrap { position: relative; height: 280px; }
+
+/* TABLE */
+.recent {
+  background: #fff; margin: 12px 16px; border-radius: 10px;
+  padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.recent h3 { font-size: 13px; margin: 0 0 12px; color: #333; }
+.recent-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.recent-table th, .recent-table td {
+  padding: 8px 6px; text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+.recent-table th { color: #666; font-weight: 600; background: #fafafa; }
+.recent-table .rate { font-weight: 700; }
+.recent-table .rate.ok { color: #43a047; }
+.recent-table .rate.warn { color: #fb8c00; }
+.recent-table .rate.danger { color: #e53935; }
+
+/* TOP NG */
+.topng {
+  background: #fff; margin: 12px 16px; border-radius: 10px;
+  padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.topng h3 { font-size: 13px; margin: 0 0 12px; color: #c62828; }
+.topng-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px;
+}
+.topng-item:last-child { border: none; }
+.topng-item .cnt {
+  background: #ffebee; color: #c62828;
+  padding: 4px 10px; border-radius: 12px; font-weight: 700;
+  min-width: 36px; text-align: center; font-size: 11px;
+}
+.topng-item .txt { flex: 1; }
+
+.empty {
+  text-align: center; padding: 40px 16px; color: #888;
+}
+.empty .ic { font-size: 40px; }
+
+.loading {
+  text-align: center; padding: 30px; color: #666; font-size: 13px;
+}
+.spinner {
+  width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #1976d2;
+  border-radius: 50%; margin: 0 auto 10px; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <div>
+    <h1>📊 巡回ダッシュボード</h1>
+    <div class="sub">Dashboard de Patrulhas</div>
+  </div>
+  <div class="actions">
+    <a href="index.html">← 戻る / Voltar</a>
+    <button id="btnReload">🔄</button>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div id="setup" class="setup hidden">
+  <h2>📡 接続設定 / Conectar à planilha</h2>
+  <p>Cole a URL do Google Apps Script para começar.</p>
+  <input type="text" id="setupUrl" placeholder="https://script.google.com/macros/s/.../exec">
+  <br>
+  <button id="btnConnect">🔗 接続 / Conectar</button>
+</div>
+
+<!-- LOADING -->
+<div id="loading" class="loading hidden">
+  <div class="spinner"></div>
+  <div>データ読込中... / Carregando dados...</div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div id="main" class="hidden">
+
+  <div class="filters">
+    <div class="filter">
+      <label>期間 / Período</label>
+      <select id="fPeriod">
+        <option value="7">最終 7日 / Últimos 7 dias</option>
+        <option value="30" selected>最終 30日 / Últimos 30 dias</option>
+        <option value="90">最終 90日 / Últimos 90 dias</option>
+        <option value="365">最終 1年 / Último ano</option>
+        <option value="all">全期間 / Tudo</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label>種別 / Tipo</label>
+      <select id="fType">
+        <option value="all">すべて / Todos</option>
+        <option value="安全巡回チェックシート">🦺 安全 / Segurança</option>
+        <option value="品質巡回チェックシート">📦 品質 / Qualidade</option>
+      </select>
+    </div>
+    <div class="filter">
+      <label>ゾーン / Zona</label>
+      <select id="fZone"><option value="all">すべて / Todas</option></select>
+    </div>
+    <div class="filter">
+      <label>巡回者 / Inspetor</label>
+      <select id="fInspector"><option value="all">すべて / Todos</option></select>
+    </div>
+    <button class="btn-refresh" id="btnApply">適用 / Aplicar</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="charts">
+    <div class="chart-card full">
+      <h3>📈 遵守率の推移 / Evolução da Taxa de Cumprimento</h3>
+      <div class="chart-canvas-wrap"><canvas id="chartTrend"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>🏷 ゾーン別 / Por Zona</h3>
+      <div class="chart-canvas-wrap"><canvas id="chartZone"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>👤 巡回者別 / Por Inspetor</h3>
+      <div class="chart-canvas-wrap"><canvas id="chartInspector"></canvas></div>
+    </div>
+  </div>
+
+  <div class="topng">
+    <h3>⚠ 多発不適合項目 TOP 10 / Itens NG mais frequentes</h3>
+    <div id="topngList"></div>
+  </div>
+
+  <div class="recent">
+    <h3>📋 最近の巡回 / Patrulhas Recentes</h3>
+    <table class="recent-table">
+      <thead>
+        <tr>
+          <th>日付 / Data</th>
+          <th>種別 / Tipo</th>
+          <th>ゾーン</th>
+          <th>巡回者 / Inspetor</th>
+          <th>職長 / Líder</th>
+          <th style="text-align:right">遵守率</th>
+          <th style="text-align:center">○/×</th>
+        </tr>
+      </thead>
+      <tbody id="recentBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+const SYNC_URL_KEY = 'patrulha:syncUrl';
+
+/* URL padrão do Apps Script — mesma do app principal.
+   Mantém o dashboard pré-conectado em qualquer aparelho. */
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxF_bwHfSIhrX9WNpDsgCrqaODsUGYI5jei6JvlvC7uQzA3ouYxnC2_IS1SnLsVfJNz/exec';
+
+let allRecords = [];
+let charts = {};
+
+function getSyncUrl() {
+  return localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SYNC_URL || '';
+}
+function setSyncUrl(u) {
+  if (u) localStorage.setItem(SYNC_URL_KEY, u);
+  else localStorage.removeItem(SYNC_URL_KEY);
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function show(id) { document.getElementById(id).classList.remove('hidden'); }
+function hide(id) { document.getElementById(id).classList.add('hidden'); }
+
+async function loadHistory() {
+  const url = getSyncUrl();
+  if (!url) { show('setup'); hide('loading'); hide('main'); return; }
+  hide('setup'); show('loading'); hide('main');
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const res = await fetch(url + sep + 'action=history', { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    allRecords = data.records || [];
+    populateFilterOptions();
+    applyFilters();
+    hide('loading'); show('main');
+  } catch (e) {
+    hide('loading');
+    alert('読込エラー / Erro ao carregar:\n' + e.message);
+    show('setup');
+  }
+}
+
+function populateFilterOptions() {
+  const zones = [...new Set(allRecords.map(r => String(r.Zona || '').trim()).filter(Boolean))].sort();
+  const inspectors = [...new Set(allRecords.map(r => String(r.Inspetor || '').trim()).filter(Boolean))].sort();
+  const fz = document.getElementById('fZone');
+  const fi = document.getElementById('fInspector');
+  fz.innerHTML = '<option value="all">すべて / Todas</option>' + zones.map(z => `<option value="${escapeHtml(z)}">${escapeHtml(z)}</option>`).join('');
+  fi.innerHTML = '<option value="all">すべて / Todos</option>' + inspectors.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(i)}</option>`).join('');
+}
+
+function getFilteredRecords() {
+  const period = document.getElementById('fPeriod').value;
+  const type = document.getElementById('fType').value;
+  const zone = document.getElementById('fZone').value;
+  const inspector = document.getElementById('fInspector').value;
+
+  let cutoff = null;
+  if (period !== 'all') {
+    cutoff = new Date(); cutoff.setDate(cutoff.getDate() - parseInt(period));
+  }
+  return allRecords.filter(r => {
+    const dt = parseDate(r.Carimbo || r.Inicio);
+    if (cutoff && dt && dt < cutoff) return false;
+    if (type !== 'all' && r.Tipo !== type) return false;
+    if (zone !== 'all' && r.Zona !== zone) return false;
+    if (inspector !== 'all' && r.Inspetor !== inspector) return false;
+    return true;
+  });
+}
+
+function parseDate(v) {
+  if (!v) return null;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function rateClass(rate) {
+  if (rate >= 90) return 'ok';
+  if (rate >= 70) return 'warn';
+  return 'danger';
+}
+
+function applyFilters() {
+  const recs = getFilteredRecords();
+  renderKpis(recs);
+  renderTrend(recs);
+  renderByZone(recs);
+  renderByInspector(recs);
+  renderTopNg(recs);
+  renderRecent(recs);
+}
+
+function renderKpis(recs) {
+  const el = document.getElementById('kpis');
+  if (recs.length === 0) {
+    el.innerHTML = `<div class="kpi"><div class="lbl">レコード</div><div class="v">0</div><div class="sub">Sem dados no período</div></div>`;
+    return;
+  }
+  const total = recs.length;
+  const avgRate = Math.round(recs.reduce((s,r) => s + (Number(r['Taxa%']) || 0), 0) / total);
+  const totalNg = recs.reduce((s,r) => s + (Number(r.NG) || 0), 0);
+  const totalOk = recs.reduce((s,r) => s + (Number(r.OK) || 0), 0);
+  const photos = recs.reduce((s,r) => s + (Number(r.Fotos) || 0), 0);
+  const safetyCount = recs.filter(r => String(r.Tipo).indexOf('安全') >= 0).length;
+  const qualityCount = recs.filter(r => String(r.Tipo).indexOf('品質') >= 0).length;
+
+  const cls = rateClass(avgRate);
+  el.innerHTML = `
+    <div class="kpi ${cls}"><div class="lbl">平均遵守率 / Taxa Média</div><div class="v">${avgRate}%</div><div class="sub">${total} 巡回 / patrulhas</div></div>
+    <div class="kpi ok"><div class="lbl">適合 / Conformes</div><div class="v">${totalOk}</div><div class="sub">○ items</div></div>
+    <div class="kpi danger"><div class="lbl">不適合 / Não Conf.</div><div class="v">${totalNg}</div><div class="sub">× items</div></div>
+    <div class="kpi"><div class="lbl">🦺 安全 / Segurança</div><div class="v">${safetyCount}</div><div class="sub">巡回数</div></div>
+    <div class="kpi"><div class="lbl">📦 品質 / Qualidade</div><div class="v">${qualityCount}</div><div class="sub">巡回数</div></div>
+    <div class="kpi"><div class="lbl">📷 写真 / Fotos</div><div class="v">${photos}</div><div class="sub">evidências</div></div>
+  `;
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderTrend(recs) {
+  destroyChart('trend');
+  const buckets = {};
+  recs.forEach(r => {
+    const dt = parseDate(r.Carimbo || r.Inicio);
+    if (!dt) return;
+    const key = weekKey(dt);
+    const type = String(r.Tipo).indexOf('安全') >= 0 ? 'safety' : 'quality';
+    buckets[key] = buckets[key] || { safety: [], quality: [] };
+    buckets[key][type].push(Number(r['Taxa%']) || 0);
+  });
+  const labels = Object.keys(buckets).sort();
+  const safetyData = labels.map(k => avg(buckets[k].safety));
+  const qualityData = labels.map(k => avg(buckets[k].quality));
+
+  const ctx = document.getElementById('chartTrend');
+  charts.trend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: '🦺 安全 / Segurança', data: safetyData, borderColor: '#ff9800', backgroundColor: 'rgba(255,152,0,0.1)', tension: 0.3, spanGaps: true },
+        { label: '📦 品質 / Qualidade', data: qualityData, borderColor: '#2196f3', backgroundColor: 'rgba(33,150,243,0.1)', tension: 0.3, spanGaps: true }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function weekKey(d) {
+  const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = (tmp.getUTCDay() + 6) % 7;
+  tmp.setUTCDate(tmp.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 4));
+  const wk = 1 + Math.round(((tmp - firstThursday) / 86400000 - 3 + ((firstThursday.getUTCDay() + 6) % 7)) / 7);
+  return `${tmp.getUTCFullYear()}-W${String(wk).padStart(2,'0')}`;
+}
+function avg(arr) {
+  if (!arr || arr.length === 0) return null;
+  return Math.round(arr.reduce((s,v) => s+v, 0) / arr.length);
+}
+
+function renderByZone(recs) {
+  destroyChart('zone');
+  const map = {};
+  recs.forEach(r => {
+    const z = String(r.Zona || '—');
+    map[z] = map[z] || [];
+    map[z].push(Number(r['Taxa%']) || 0);
+  });
+  const labels = Object.keys(map).sort();
+  const data = labels.map(z => avg(map[z]));
+  const colors = data.map(v => v >= 90 ? '#43a047' : v >= 70 ? '#fb8c00' : '#e53935');
+  const ctx = document.getElementById('chartZone');
+  charts.zone = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '平均遵守率', data, backgroundColor: colors }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      scales: { x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function renderByInspector(recs) {
+  destroyChart('inspector');
+  const map = {};
+  recs.forEach(r => {
+    const k = String(r.Inspetor || '—');
+    map[k] = map[k] || [];
+    map[k].push(Number(r['Taxa%']) || 0);
+  });
+  const labels = Object.keys(map).sort();
+  const data = labels.map(k => avg(map[k]));
+  const counts = labels.map(k => map[k].length);
+  const ctx = document.getElementById('chartInspector');
+  charts.inspector = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: '平均遵守率 %', data, backgroundColor: '#1976d2', yAxisID: 'y' },
+        { label: '巡回数 / Patrulhas', data: counts, type: 'line', borderColor: '#c62828', backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, max: 100, position: 'left', ticks: { callback: v => v + '%' } },
+        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+      },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function renderTopNg(recs) {
+  const counts = {};
+  recs.forEach(r => {
+    const txt = String(r['Itens NG'] || '');
+    if (!txt) return;
+    txt.split('|').forEach(part => {
+      const m = part.trim().match(/^(No\.\d+\s+[^(]+)/);
+      if (m) {
+        const key = m[1].trim();
+        counts[key] = (counts[key] || 0) + 1;
+      }
+    });
+  });
+  const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 10);
+  const el = document.getElementById('topngList');
+  if (sorted.length === 0) {
+    el.innerHTML = `<div style="text-align:center; color:#888; font-size:13px; padding:14px;">不適合項目なし / Sem itens NG</div>`;
+    return;
+  }
+  el.innerHTML = sorted.map(([k, c]) => `
+    <div class="topng-item">
+      <span class="cnt">${c}×</span>
+      <span class="txt">${escapeHtml(k)}</span>
+    </div>
+  `).join('');
+}
+
+function renderRecent(recs) {
+  const sorted = [...recs].sort((a,b) => {
+    const da = parseDate(a.Carimbo) || new Date(0);
+    const db = parseDate(b.Carimbo) || new Date(0);
+    return db - da;
+  }).slice(0, 20);
+  const tb = document.getElementById('recentBody');
+  if (sorted.length === 0) {
+    tb.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888; padding:14px;">データなし / Sem dados</td></tr>`;
+    return;
+  }
+  tb.innerHTML = sorted.map(r => {
+    const rate = Number(r['Taxa%']) || 0;
+    const typeIc = String(r.Tipo).indexOf('安全') >= 0 ? '🦺' : '📦';
+    const typeShort = String(r.Tipo).indexOf('安全') >= 0 ? '安全' : '品質';
+    return `<tr>
+      <td>${fmtDate(parseDate(r.Carimbo))}</td>
+      <td>${typeIc} ${typeShort}</td>
+      <td>${escapeHtml(r.Zona)}</td>
+      <td>${escapeHtml(r.Inspetor)}</td>
+      <td>${escapeHtml(r.Lider)}</td>
+      <td style="text-align:right" class="rate ${rateClass(rate)}">${rate}%</td>
+      <td style="text-align:center; font-size:11px; color:#666">${r.OK}/${r.NG}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* events */
+document.getElementById('btnConnect').addEventListener('click', () => {
+  const url = document.getElementById('setupUrl').value.trim();
+  if (!url) return;
+  setSyncUrl(url);
+  loadHistory();
+});
+document.getElementById('btnApply').addEventListener('click', applyFilters);
+document.getElementById('btnReload').addEventListener('click', loadHistory);
+['fPeriod','fType','fZone','fInspector'].forEach(id => {
+  document.getElementById(id).addEventListener('change', applyFilters);
+});
+
+/* boot */
+loadHistory();
+</script>
+</body>
+</html>
