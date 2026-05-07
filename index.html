@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1976d2">
+<title>巡回チェックシート | Patrulha Semanal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  background: #f0f2f5; color: #222;
+  -webkit-text-size-adjust: 100%;
+}
+.app { max-width: 720px; margin: 0 auto; padding: 0 0 120px 0; }
+
+/* HEADER */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: linear-gradient(135deg,#1976d2,#1565c0);
+  color: #fff; padding: 14px 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.topbar h1 { font-size: 16px; margin: 0; font-weight: 600; }
+.topbar .sub { font-size: 11px; opacity: .85; margin-top: 2px; }
+.topbar .switch, .topbar .gear {
+  background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4);
+  color: #fff; font-size: 12px; padding: 6px 10px; border-radius: 16px;
+  cursor: pointer; font-family: inherit;
+}
+.topbar .gear { padding: 6px 10px; font-size: 16px; line-height: 1; }
+.topbar .actions-right { display: flex; gap: 6px; }
+
+/* SELECTOR */
+.selector { padding: 24px 16px; }
+.selector h2 { text-align: center; margin: 8px 0 4px; font-size: 18px; }
+.selector .sub { text-align: center; color: #666; font-size: 13px; margin-bottom: 24px; }
+.choice {
+  display: block; width: 100%; padding: 24px 18px;
+  margin-bottom: 14px; border-radius: 14px;
+  border: none; text-align: left;
+  cursor: pointer; transition: transform .1s;
+  box-shadow: 0 3px 10px rgba(0,0,0,.08);
+}
+.choice:active { transform: scale(.98); }
+.choice .ic { font-size: 32px; margin-right: 12px; vertical-align: middle; }
+.choice .ttl { font-size: 17px; font-weight: 600; display: inline-block; vertical-align: middle; }
+.choice .pt { display: block; font-size: 13px; opacity: .85; margin-top: 6px; margin-left: 46px; }
+.choice.safety { background: linear-gradient(135deg,#fff,#fff8e1); color: #c65c00; border-left: 6px solid #ff9800; }
+.choice.quality { background: linear-gradient(135deg,#fff,#e3f2fd); color: #0d47a1; border-left: 6px solid #2196f3; }
+
+/* HEADER FORM */
+.section { background: #fff; margin: 12px 0; padding: 14px 16px; border-radius: 0; }
+.section h3 {
+  font-size: 14px; margin: 0 0 12px; padding-bottom: 8px;
+  border-bottom: 2px solid #1976d2; color: #1976d2;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 12px; color: #555; margin-bottom: 4px; font-weight: 600; }
+.field label .pt { color: #888; font-weight: 400; margin-left: 6px; font-size: 11px; }
+.field input, .field textarea, .field select {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid #cfd8dc; border-radius: 8px;
+  font-size: 15px; background: #fafafa; font-family: inherit;
+  appearance: none; -webkit-appearance: none;
+}
+.field select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+  outline: none; border-color: #1976d2; background-color: #fff;
+}
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* CATEGORY */
+.cat-block { background: #fff; margin: 12px 0; padding: 0; border-radius: 0; overflow: hidden; }
+.cat-head {
+  background: linear-gradient(90deg,#37474f,#455a64);
+  color: #fff; padding: 10px 16px; font-size: 13px; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cat-head .pt { font-size: 11px; opacity: .8; font-weight: 400; }
+.cat-rate {
+  background: rgba(255,255,255,.2); padding: 3px 8px; border-radius: 10px;
+  font-size: 11px;
+}
+
+/* ITEM */
+.item { padding: 12px 16px; border-bottom: 1px solid #eee; }
+.item:last-child { border-bottom: none; }
+.item .num {
+  display: inline-block; width: 24px; height: 24px;
+  background: #eceff1; color: #455a64; border-radius: 50%;
+  text-align: center; line-height: 24px; font-size: 12px; font-weight: 600;
+  margin-right: 8px; vertical-align: top;
+}
+.item .txt-jp { display: inline-block; font-size: 14px; line-height: 1.4; width: calc(100% - 36px); }
+.item .txt-pt { display: block; font-size: 12px; color: #666; margin-top: 4px; margin-left: 32px; line-height: 1.35; }
+
+.item .controls { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+.btn-eval {
+  flex: 1; padding: 10px 0; border: 2px solid #cfd8dc;
+  background: #fff; border-radius: 8px; font-size: 18px; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+}
+.btn-eval.ok { color: #2e7d32; }
+.btn-eval.ng { color: #c62828; }
+.btn-eval.active.ok { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+.btn-eval.active.ng { background: #c62828; color: #fff; border-color: #c62828; }
+
+.item .note {
+  margin-top: 8px; width: 100%; padding: 8px 10px;
+  border: 1px solid #e0e0e0; border-radius: 6px;
+  font-size: 13px; min-height: 36px; resize: vertical; font-family: inherit;
+  background: #fafafa;
+}
+.item.has-ng { background: #fff5f5; }
+.item.has-ng .note { border-color: #ffcdd2; background: #fff; }
+
+/* PHOTOS */
+.photos-wrap { margin-top: 8px; display: none; }
+.item.has-ng .photos-wrap { display: block; }
+.photos-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.photo-thumb {
+  position: relative; width: 64px; height: 64px;
+  border-radius: 8px; overflow: hidden; background: #eee;
+  border: 1px solid #ccc;
+}
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-thumb .x {
+  position: absolute; top: 2px; right: 2px;
+  background: rgba(198,40,40,.95); color: #fff;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: none; font-size: 12px; cursor: pointer; padding: 0;
+  line-height: 20px; font-family: inherit;
+}
+.btn-photo {
+  background: #fff; border: 2px dashed #c62828; color: #c62828;
+  padding: 8px 14px; border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-photo:active { background: #ffebee; }
+.btn-photo input { display: none; }
+.photo-count { font-size: 11px; color: #c62828; margin-left: 6px; }
+
+/* SUMMARY */
+.summary {
+  background: #fff; margin: 12px 0; padding: 16px;
+  border-radius: 0;
+}
+.summary h3 { font-size: 14px; margin: 0 0 12px; color: #1976d2; }
+.gauge {
+  position: relative; width: 100%; height: 24px;
+  background: #eceff1; border-radius: 12px; overflow: hidden;
+  margin-bottom: 8px;
+}
+.gauge-fill {
+  height: 100%; background: linear-gradient(90deg,#43a047,#66bb6a);
+  transition: width .4s; border-radius: 12px;
+}
+.gauge-fill.warn { background: linear-gradient(90deg,#fb8c00,#ffa726); }
+.gauge-fill.danger { background: linear-gradient(90deg,#e53935,#ef5350); }
+.gauge-text {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+.stat {
+  background: #f5f7fa; padding: 10px 6px; border-radius: 8px; text-align: center;
+}
+.stat .v { font-size: 20px; font-weight: 700; }
+.stat .l { font-size: 10px; color: #666; margin-top: 2px; }
+.stat.ok .v { color: #2e7d32; }
+.stat.ng .v { color: #c62828; }
+.stat.pe .v { color: #757575; }
+
+.cat-summary { margin-top: 16px; }
+.cat-summary .row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+}
+.cat-summary .row:last-child { border: none; }
+.cat-summary .name { font-size: 13px; }
+.cat-summary .pt-name { font-size: 11px; color: #888; }
+.cat-summary .val { font-size: 13px; font-weight: 600; color: #1976d2; }
+
+.ng-list { margin-top: 12px; }
+.ng-list h4 { font-size: 13px; margin: 12px 0 8px; color: #c62828; }
+.ng-item {
+  background: #fff5f5; padding: 8px 10px; border-radius: 6px;
+  font-size: 12px; margin-bottom: 6px; border-left: 3px solid #c62828;
+}
+.ng-item .ng-num { font-weight: 700; color: #c62828; margin-right: 6px; }
+.ng-item .ng-note { display: block; font-size: 11px; color: #555; margin-top: 4px; font-style: italic; }
+
+/* ACTIONS */
+.actions {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,.1);
+  padding: 10px 12px; display: flex; gap: 8px;
+  max-width: 720px; margin: 0 auto;
+}
+.action-btn {
+  flex: 1; padding: 12px 8px; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: inherit;
+}
+.action-btn.pdf { background: #455a64; color: #fff; }
+.action-btn.wa { background: #25d366; color: #fff; }
+.action-btn.reset { background: #eceff1; color: #455a64; padding: 12px 14px; flex: 0 0 auto; }
+.action-btn:disabled { opacity: .6; }
+.action-btn .ic { font-size: 16px; }
+
+/* MODAL / TOAST */
+.toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+  background: #323232; color: #fff; padding: 10px 18px;
+  border-radius: 24px; font-size: 13px; z-index: 1000;
+  box-shadow: 0 3px 10px rgba(0,0,0,.2);
+  opacity: 0; transition: opacity .3s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+.loading {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 999;
+  display: none; align-items: center; justify-content: center;
+}
+.loading.show { display: flex; }
+.loading .box { background: #fff; padding: 24px 32px; border-radius: 12px; text-align: center; }
+.spinner {
+  width: 32px; height: 32px; border: 3px solid #eee; border-top-color: #1976d2;
+  border-radius: 50%; margin: 0 auto 10px; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden { display: none !important; }
+
+/* SETTINGS */
+.settings { padding: 0; }
+.settings .panel { background: #fff; margin: 12px 0; padding: 14px 16px; }
+.settings .panel h3 {
+  font-size: 14px; margin: 0 0 12px; padding-bottom: 8px;
+  border-bottom: 2px solid #1976d2; color: #1976d2;
+  display: flex; align-items: center; gap: 8px;
+}
+.settings .panel h3 .pt { font-size: 11px; color: #888; font-weight: 400; margin-left: auto; }
+.list-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: #f5f7fa;
+  border-radius: 8px; margin-bottom: 6px;
+}
+.list-item .name { flex: 1; font-size: 14px; }
+.list-item .del {
+  background: #ffebee; color: #c62828; border: none;
+  width: 32px; height: 32px; border-radius: 50%;
+  font-size: 16px; cursor: pointer; font-family: inherit;
+}
+.list-item .del:active { background: #ffcdd2; }
+.list-empty {
+  text-align: center; color: #888; font-size: 13px; padding: 16px;
+  background: #fafafa; border-radius: 8px; border: 1px dashed #ccc;
+  margin-bottom: 8px;
+}
+.add-row {
+  display: flex; gap: 6px; margin-top: 8px;
+}
+.add-row input {
+  flex: 1; padding: 10px 12px; border: 1px solid #cfd8dc;
+  border-radius: 8px; font-size: 14px; background: #fafafa; font-family: inherit;
+}
+.add-row input:focus { outline: none; border-color: #1976d2; background: #fff; }
+.add-row button {
+  background: #1976d2; color: #fff; border: none;
+  padding: 0 18px; border-radius: 8px; font-size: 14px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.add-row button:active { background: #1565c0; }
+.settings-hint {
+  background: #e3f2fd; color: #0d47a1; padding: 10px 14px;
+  margin: 12px; border-radius: 8px; font-size: 12px;
+  border-left: 4px solid #1976d2;
+}
+
+/* SYNC PANEL */
+.sync-panel { background: #fff; padding: 14px 16px; border-top: 4px solid #4caf50; }
+.sync-panel.disconnected { border-top-color: #999; }
+.sync-status {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  background: #e8f5e9; color: #1b5e20; font-size: 13px;
+  margin-bottom: 10px;
+}
+.sync-status.disconnected { background: #f5f5f5; color: #555; }
+.sync-status.error { background: #ffebee; color: #c62828; }
+.sync-status .icon { font-size: 18px; }
+.sync-status .lines { flex: 1; }
+.sync-status .ts { font-size: 11px; opacity: .8; }
+.sync-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.sync-actions button {
+  flex: 1; min-width: 120px; padding: 10px 12px; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.btn-sync { background: #1976d2; color: #fff; }
+.btn-sync:active { background: #1565c0; }
+.btn-sync:disabled { opacity: .6; }
+.btn-disconnect { background: #ffebee; color: #c62828; }
+.btn-connect { background: #4caf50; color: #fff; }
+.url-row {
+  display: flex; gap: 6px; margin-bottom: 10px;
+}
+.url-row input {
+  flex: 1; padding: 10px 12px; border: 1px solid #cfd8dc;
+  border-radius: 8px; font-size: 13px; background: #fafafa; font-family: inherit;
+}
+.url-row input:focus { outline: none; border-color: #1976d2; background: #fff; }
+.list-readonly-hint {
+  font-size: 11px; color: #666; padding: 6px 0; font-style: italic;
+}
+.synced-badge {
+  display: inline-block; background: #e8f5e9; color: #2e7d32;
+  font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: 6px;
+  vertical-align: middle; font-weight: 600;
+}
+
+/* PDF RENDER AREA — hidden, used by html2canvas */
+#pdf-render {
+  position: absolute; left: -10000px; top: 0;
+  width: 1100px; background: #fff; padding: 24px;
+  font-family: "Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
+  color: #000;
+}
+#pdf-render .pdf-header {
+  display: grid; grid-template-columns: 280px 70px 1fr; gap: 8px;
+  margin-bottom: 12px; align-items: stretch;
+}
+#pdf-render .pdf-title {
+  border: 1.5px solid #000; padding: 12px 16px; font-size: 18px; font-weight: 700;
+  display: flex; align-items: center;
+}
+#pdf-render .pdf-leader {
+  border: 1px solid #000; display: grid; grid-template-rows: auto 1fr;
+  text-align: center;
+}
+#pdf-render .pdf-leader .lh { font-size: 11px; border-bottom: 1px solid #000; padding: 2px; }
+#pdf-render .pdf-leader .lv { font-size: 13px; padding: 6px; }
+#pdf-render .pdf-meta {
+  border: 1px solid #000; display: grid; grid-template-columns: 60px 1fr;
+  font-size: 11px;
+}
+#pdf-render .pdf-meta div {
+  border-bottom: 1px solid #000; border-right: 1px solid #000;
+  padding: 4px 6px; display: flex; align-items: center;
+}
+#pdf-render .pdf-meta div:nth-child(2n) { border-right: none; }
+#pdf-render .pdf-meta div:nth-child(5),
+#pdf-render .pdf-meta div:nth-child(6) { border-bottom: none; }
+
+#pdf-render table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+}
+#pdf-render th, #pdf-render td {
+  border: 1px solid #000; padding: 4px 6px; vertical-align: middle;
+}
+#pdf-render th { background: #f0f0f0; font-weight: 600; text-align: center; }
+#pdf-render .col-cat { width: 60px; text-align: center; writing-mode: vertical-rl; }
+#pdf-render .col-no { width: 36px; text-align: center; }
+#pdf-render .col-item { width: 360px; }
+#pdf-render .col-eval { width: 50px; text-align: center; font-size: 16px; font-weight: 700; }
+#pdf-render .col-rate { width: 60px; text-align: center; font-size: 10px; }
+#pdf-render .col-note { font-size: 10px; }
+#pdf-render .ev-ok { color: #1b5e20; }
+#pdf-render .ev-ng { color: #b71c1c; }
+#pdf-render .pdf-summary {
+  margin-top: 12px; padding: 10px; border: 1.5px solid #000;
+  font-size: 11px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px;
+}
+#pdf-render .pdf-summary div { text-align: center; }
+#pdf-render .pdf-summary .v { font-size: 16px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <h1 id="topTitle">巡回チェックシート</h1>
+      <div class="sub" id="topSub">Patrulha Semanal</div>
+    </div>
+    <div class="actions-right">
+      <button class="switch hidden" id="btnSwitch">↺ 切替</button>
+      <button class="gear" id="btnSettings" title="設定 / Configurações">⚙</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 1 : SELECTOR -->
+  <div id="screen-select" class="selector">
+    <h2>巡回を選択 / Selecione a Patrulha</h2>
+    <p class="sub">今週のチェックを開始 / Inicie a checagem desta semana</p>
+    <button class="choice safety" data-type="safety">
+      <span class="ic">🦺</span><span class="ttl">安全巡回チェックシート</span>
+      <span class="pt">Checklist de Patrulha de Segurança — 21 itens</span>
+    </button>
+    <button class="choice quality" data-type="quality">
+      <span class="ic">📦</span><span class="ttl">品質巡回チェックシート</span>
+      <span class="pt">Checklist de Patrulha de Qualidade — 20 itens</span>
+    </button>
+    <a href="dashboard.html" style="display:block; text-align:center; margin-top:18px; color:#1976d2; font-size:14px; text-decoration:none; padding:12px; border:1px dashed #1976d2; border-radius:10px;">
+      📊 ダッシュボード / Ver Dashboard
+    </a>
+  </div>
+
+  <!-- SCREEN 2 : FORM -->
+  <div id="screen-form" class="hidden">
+    <div class="section">
+      <h3>基本情報 <span style="font-size:11px;color:#888;font-weight:400;">Informações básicas</span></h3>
+      <div class="field">
+        <label>ゾーン<span class="pt">Zona / Setor</span></label>
+        <select id="f-zone"></select>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>実施日 開始<span class="pt">Início</span></label>
+          <input type="date" id="f-date-start">
+        </div>
+        <div class="field">
+          <label>実施日 終了<span class="pt">Fim</span></label>
+          <input type="date" id="f-date-end">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>巡回者<span class="pt">Inspetor</span></label>
+          <select id="f-inspector"></select>
+        </div>
+        <div class="field">
+          <label>職長<span class="pt">Líder</span></label>
+          <select id="f-leader"></select>
+        </div>
+      </div>
+    </div>
+
+    <div id="categories"></div>
+
+    <div class="summary">
+      <h3>📊 集計 / Resumo Visual</h3>
+      <div class="gauge">
+        <div class="gauge-fill" id="gaugeFill" style="width:0%"></div>
+        <div class="gauge-text" id="gaugeText">遵守率 0%</div>
+      </div>
+      <div class="stats">
+        <div class="stat ok"><div class="v" id="cntOk">0</div><div class="l">○ 適合 / OK</div></div>
+        <div class="stat ng"><div class="v" id="cntNg">0</div><div class="l">× 不適 / NG</div></div>
+        <div class="stat pe"><div class="v" id="cntPe">21</div><div class="l">未記入 / Pend.</div></div>
+      </div>
+      <div class="cat-summary" id="catSummary"></div>
+      <div class="ng-list" id="ngList"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3 : SETTINGS -->
+  <div id="screen-settings" class="settings hidden">
+
+    <!-- SYNC PANEL -->
+    <div class="sync-panel" id="syncPanel">
+      <div class="sync-status" id="syncStatus">
+        <span class="icon">📡</span>
+        <div class="lines">
+          <div id="syncStatusText">未接続 / Não conectado</div>
+          <div class="ts" id="syncStatusTs"></div>
+        </div>
+      </div>
+      <div id="syncDisconnected">
+        <div class="url-row">
+          <input type="text" id="syncUrlInput"
+            placeholder="Google Apps Script URL (https://script.google.com/...)">
+        </div>
+        <div class="sync-actions">
+          <button class="btn-connect" id="btnConnect">🔗 接続 / Conectar</button>
+        </div>
+        <div class="settings-hint" style="margin: 10px 0 0;">
+          📋 接続するには、Google Sheets に Apps Script を設定してください。<br>
+          <strong>Como configurar:</strong> abra <code>google-apps-script.gs</code> (na mesma pasta) e siga as instruções.
+        </div>
+      </div>
+      <div id="syncConnected" class="hidden">
+        <div class="sync-actions">
+          <button class="btn-sync" id="btnSyncNow">🔄 今すぐ同期 / Sincronizar agora</button>
+          <button class="btn-disconnect" id="btnDisconnect">✕ 切断 / Desconectar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-hint">
+      ⚙ ここで登録した項目が、フォームのプルダウンに表示されます。<br>
+      Os itens cadastrados aqui aparecem nos menus suspensos do formulário.<br>
+      💾 ローカル保存 / Salvo neste celular (ou sincronizado da planilha quando conectado).
+    </div>
+
+    <div class="panel">
+      <h3>🏷 ゾーン / Setores <span class="pt">(<span id="cnt-zones">0</span>)</span></h3>
+      <div id="list-zones"></div>
+      <div class="add-row">
+        <input type="text" id="new-zone" placeholder="新しいゾーン / Nova zona (ex: A-1)">
+        <button data-add="zone">+ 追加</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>👷 職長 / Líderes <span class="pt">(<span id="cnt-leaders">0</span>)</span></h3>
+      <div id="list-leaders"></div>
+      <div class="add-row">
+        <input type="text" id="new-leader" placeholder="新しい職長 / Novo líder">
+        <button data-add="leader">+ 追加</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>👤 巡回者 / Inspetores <span class="pt">(<span id="cnt-inspectors">0</span>)</span></h3>
+      <div id="list-inspectors"></div>
+      <div class="add-row">
+        <input type="text" id="new-inspector" placeholder="新しい巡回者 / Novo inspetor">
+        <button data-add="inspector">+ 追加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTION BAR -->
+  <div class="actions hidden" id="actionBar">
+    <button class="action-btn reset" id="btnReset" title="リセット">↻</button>
+    <button class="action-btn pdf" id="btnPdf"><span class="ic">📄</span>PDF保存</button>
+    <button class="action-btn wa" id="btnWa"><span class="ic">📱</span>WhatsApp</button>
+  </div>
+</div>
+
+<!-- HIDDEN PDF RENDER AREA -->
+<div id="pdf-render"></div>
+
+<!-- TOAST + LOADING -->
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading"><div class="box"><div class="spinner"></div><div id="loadingMsg">PDF生成中...</div></div></div>
+
+<script>
+/* ============================================================
+   DATA — bilingual checklist items
+   ============================================================ */
+const DATA = {
+  safety: {
+    titleJp: "安全巡回チェックシート",
+    titlePt: "Checklist de Patrulha de Segurança",
+    icon: "🦺",
+    categories: [
+      {
+        nameJp: "フォークリフト・ピッキー操作",
+        namePt: "Operação de Empilhadeira / Picky",
+        items: [
+          { jp: "リフト・ピッキーの充電場は整理・整頓されている", pt: "A área de carregamento da empilhadeira/picky está organizada e arrumada" },
+          { jp: "始業・終業点検が正しく行なわれている", pt: "Inspeção de início e fim de expediente está sendo feita corretamente" },
+          { jp: "管理者等決められた表示がされているか", pt: "A identificação do responsável está visível conforme o padrão" },
+          { jp: "リフト・ピッキーにキズ・汚れがない", pt: "Empilhadeira/picky sem riscos ou sujeira" },
+          { jp: "リフトの鍵は決められた置場に保管する", pt: "A chave da empilhadeira é guardada no local determinado" },
+          { jp: "リフトの2m以内には近付けさせない。歩行者には声かけできている", pt: "Não permite aproximação a menos de 2m da empilhadeira; avisa pedestres com voz" },
+          { jp: "パレットへの爪差し込み時、根元まで差し込んでいるか", pt: "Insere o garfo até a base ao colocar no palete" },
+          { jp: "走行時リーチインしているか", pt: "Mantém o reach-in (recolhido) ao trafegar" },
+          { jp: "走行時爪を平行以上にチルトしているか", pt: "Inclina os garfos paralelamente ou mais ao trafegar" },
+          { jp: "リフトで後退する際、後方確認が出来ている", pt: "Verifica a parte traseira ao dar ré com a empilhadeira" },
+          { jp: "一時停止場所では確実に止まり、右左の確認ができている", pt: "Para completamente nos locais de parada e verifica direita/esquerda" },
+          { jp: "ながら動作・急のつく作業をしていないか", pt: "Não realiza trabalhos simultâneos ou apressados" },
+          { jp: "リフト離れるときはは爪先端を床につけているか", pt: "Ao sair da empilhadeira, encosta a ponta do garfo no chão" },
+          { jp: "駐車時はキーを抜いているか", pt: "Retira a chave ao estacionar" }
+        ]
+      },
+      {
+        nameJp: "状態・行動",
+        namePt: "Estado e Comportamento",
+        items: [
+          { jp: "ゾーンに目立ったゴミが落ちていない", pt: "Não há lixo visível na zona" },
+          { jp: "棚・パレットが白線の内側になっているか", pt: "Prateleira/palete está dentro da linha branca" },
+          { jp: "PLの支柱にズレがない", pt: "Pilar do PL sem desalinhamento" },
+          { jp: "とまれの表示は消えていないか", pt: "Sinalização de \"PARE\" não está apagada" },
+          { jp: "決められた場所以外に物が置かれていない（区画線がある）", pt: "Não há objetos fora do local determinado (com linhas demarcatórias)" },
+          { jp: "タップコンセントにホコリはない", pt: "Tomada / régua sem poeira" },
+          { jp: "端末周辺の3Sができているか", pt: "3S (Seiri, Seiton, Seiso) está sendo feito ao redor do terminal" }
+        ]
+      }
+    ]
+  },
+  quality: {
+    titleJp: "品質巡回チェックシート",
+    titlePt: "Checklist de Patrulha de Qualidade",
+    icon: "📦",
+    categories: [
+      {
+        nameJp: "ピッキング作業",
+        namePt: "Trabalho de Picking",
+        items: [
+          { jp: "PLをほうきで清掃しているか", pt: "Limpa o PL com vassoura" },
+          { jp: "保護ダンボールを敷いているか", pt: "Coloca papelão de proteção" },
+          { jp: "商品は1本ずつスキャンしているか", pt: "Escaneia os produtos um a um" },
+          { jp: "ロケーション内でスキャンしていないか", pt: "Não escaneia dentro da locação" },
+          { jp: "作業を中断せず1サイクル終わらせているか", pt: "Termina 1 ciclo sem interromper o trabalho" },
+          { jp: "ロケーションに仮置きしていないか", pt: "Não deixa produtos temporariamente na locação" },
+          { jp: "取り間違えたら先にロケに戻しているか", pt: "Se pegou o item errado, devolve à locação primeiro" },
+          { jp: "異常時の対応を適切に行っているか", pt: "Reage adequadamente em caso de anomalia" },
+          { jp: "出荷数量とラベル梱包数を照合しているか", pt: "Confere quantidade de envio com o número da etiqueta" },
+          { jp: "届け先シールのコースとカンバンのコースを照合しているか", pt: "Confere a rota do adesivo de destino com a rota do kanban" },
+          { jp: "商品には目立ったホコリはない", pt: "Produtos sem poeira visível" },
+          { jp: "商品に梱包上の異常がないか確認しているか（6面チェック）", pt: "Verifica se não há anomalias na embalagem (verificação dos 6 lados)" }
+        ]
+      },
+      {
+        nameJp: "振り出し作業",
+        namePt: "Trabalho de Distribuição",
+        items: [
+          { jp: "商品がPLから落下しそうな荷揃えになっていないか", pt: "Os produtos não estão arrumados de forma que possam cair do PL" },
+          { jp: "倒れ易い商品は必ず固定して運搬しているか", pt: "Produtos que caem facilmente são fixados antes do transporte" }
+        ]
+      },
+      {
+        nameJp: "入荷作業",
+        namePt: "Trabalho de Recebimento",
+        items: [
+          { jp: "何処からの入荷か確認しているか", pt: "Confere de onde vem a mercadoria recebida" },
+          { jp: "検品前に入荷品の外観確認をしているか", pt: "Verifica a aparência da mercadoria antes da inspeção" },
+          { jp: "検品中同じ物を2度打ちしないようペンなどでしるしをしているか", pt: "Marca com caneta para não bipar o mesmo item duas vezes durante a inspeção" },
+          { jp: "検品中、梱包不良・不良品を受入れしないようにしているか", pt: "Não aceita embalagens com defeito ou produtos defeituosos durante a inspeção" },
+          { jp: "外部倉庫別に差し替えしているか", pt: "Faz a substituição por armazém externo" },
+          { jp: "各外部倉庫の振り出し場にきちんと振り出しているか", pt: "Distribui corretamente nos pontos de distribuição de cada armazém externo" }
+        ]
+      }
+    ]
+  }
+};
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentType = null;        // "safety" | "quality"
+let evals = [];                // ["", "ok", "ng", ...] one per item
+let notes = [];                // notes per item
+let photos = [];               // [[dataUrl,...], ...] per item
+let itemFlat = [];             // flattened item list with category index ref
+let lastScreen = 'select';     // for settings back-nav
+
+const MAX_PHOTOS_PER_ITEM = 3;
+const PHOTO_MAX_DIM = 1024;    // px — resize on the client
+const PHOTO_QUALITY = 0.7;     // JPEG quality
+
+/* ============================================================
+   LISTS — persisted in localStorage (or synced from Google Sheets)
+   ============================================================ */
+const STORE_KEYS = {
+  zone: 'patrulha:zones',
+  leader: 'patrulha:leaders',
+  inspector: 'patrulha:inspectors'
+};
+const SYNC_URL_KEY = 'patrulha:syncUrl';
+const SYNC_AT_KEY = 'patrulha:syncedAt';
+const DEFAULTS = {
+  zone: ['A-1','A-2','B-1','B-2','C-1'],
+  leader: [],
+  inspector: []
+};
+
+function getSyncUrl() { return localStorage.getItem(SYNC_URL_KEY) || ''; }
+function setSyncUrl(u) {
+  if (u) localStorage.setItem(SYNC_URL_KEY, u);
+  else localStorage.removeItem(SYNC_URL_KEY);
+}
+function getSyncedAt() { return localStorage.getItem(SYNC_AT_KEY); }
+function isSynced() { return !!getSyncUrl(); }
+
+async function syncFromSheet(silent) {
+  const url = getSyncUrl();
+  if (!url) throw new Error('URL não configurada');
+  if (!silent) showLoading('🔄 同期中... / Sincronizando...');
+  try {
+    const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (Array.isArray(data.zones))      saveList('zone', data.zones);
+    if (Array.isArray(data.leaders))    saveList('leader', data.leaders);
+    if (Array.isArray(data.inspectors)) saveList('inspector', data.inspectors);
+    localStorage.setItem(SYNC_AT_KEY, new Date().toISOString());
+    if (!silent) {
+      hideLoading();
+      toast(`✅ 同期完了 (${(data.zones||[]).length} ゾーン, ${(data.leaders||[]).length} 職長, ${(data.inspectors||[]).length} 巡回者)`);
+    }
+    return data;
+  } catch (e) {
+    if (!silent) {
+      hideLoading();
+      alert('❌ 同期エラー / Erro ao sincronizar:\n' + e.message + '\n\nURLを確認してください。\nVerifique a URL e a configuração do Apps Script.');
+    } else {
+      console.warn('Auto-sync falhou:', e);
+    }
+    throw e;
+  }
+}
+
+function fmtSyncTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2,'0');
+  return `最終同期 / Última: ${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* Send checklist record to Google Sheets (fire-and-forget). */
+async function sendHistoryToSheet() {
+  const url = getSyncUrl();
+  if (!url) return; // not connected — skip
+  const data = DATA[currentType];
+  const total = itemFlat.length;
+  const ok = evals.filter(v => v === 'ok').length;
+  const ng = evals.filter(v => v === 'ng').length;
+  const evaluated = ok + ng;
+  const rate = evaluated > 0 ? Math.round((ok/evaluated)*100) : 0;
+  const photoCount = photos.reduce((sum, arr) => sum + (arr ? arr.length : 0), 0);
+
+  const ngItems = itemFlat
+    .map((f, idx) => evals[idx] === 'ng' ? { no: idx+1, jp: f.jp, note: notes[idx] || '' } : null)
+    .filter(Boolean);
+
+  const payload = {
+    type: data.titleJp,
+    zone: document.getElementById('f-zone').value || '',
+    dateStart: document.getElementById('f-date-start').value || '',
+    dateEnd: document.getElementById('f-date-end').value || '',
+    inspector: document.getElementById('f-inspector').value || '',
+    leader: document.getElementById('f-leader').value || '',
+    total: total, ok: ok, ng: ng, pending: total-ok-ng,
+    rate: rate, photoCount: photoCount, ngItems: ngItems
+  };
+
+  try {
+    // text/plain Content-Type avoids CORS preflight to Google Apps Script
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+    const json = await res.json();
+    if (json.ok) toast('☁ シート保存 / Salvo na planilha');
+    else console.warn('Save failed:', json);
+  } catch (e) {
+    console.warn('History POST failed:', e);
+    // silent — user already has the PDF
+  }
+}
+
+function loadList(kind) {
+  try {
+    const raw = localStorage.getItem(STORE_KEYS[kind]);
+    if (raw === null) return [...DEFAULTS[kind]];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [...DEFAULTS[kind]];
+  } catch (e) { return [...DEFAULTS[kind]]; }
+}
+function saveList(kind, arr) {
+  try { localStorage.setItem(STORE_KEYS[kind], JSON.stringify(arr)); } catch (e) {}
+}
+function addToList(kind, value) {
+  value = (value || '').trim();
+  if (!value) return false;
+  const list = loadList(kind);
+  if (list.includes(value)) { toast('既に登録済み / Já existe'); return false; }
+  list.push(value);
+  saveList(kind, list);
+  return true;
+}
+function removeFromList(kind, value) {
+  const list = loadList(kind).filter(v => v !== value);
+  saveList(kind, list);
+}
+
+/* fill a <select> with options from a list */
+function fillSelect(selectEl, list, currentValue, placeholder) {
+  selectEl.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = ''; ph.textContent = placeholder; ph.disabled = true; ph.selected = !currentValue;
+  selectEl.appendChild(ph);
+  list.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    if (v === currentValue) opt.selected = true;
+    selectEl.appendChild(opt);
+  });
+  if (list.length === 0) {
+    const empty = document.createElement('option');
+    empty.value = ''; empty.disabled = true;
+    empty.textContent = '— 設定で追加 / Adicione em ⚙ —';
+    selectEl.appendChild(empty);
+  }
+}
+
+function refreshFormSelects() {
+  fillSelect(document.getElementById('f-zone'), loadList('zone'),
+    document.getElementById('f-zone').value, '— 選択 / Selecione —');
+  fillSelect(document.getElementById('f-inspector'), loadList('inspector'),
+    document.getElementById('f-inspector').value, '— 選択 / Selecione —');
+  fillSelect(document.getElementById('f-leader'), loadList('leader'),
+    document.getElementById('f-leader').value, '— 選択 / Selecione —');
+}
+
+/* ============================================================
+   SETTINGS SCREEN
+   ============================================================ */
+function renderSettings() {
+  // 1) sync panel state
+  const url = getSyncUrl();
+  const syncStatus = document.getElementById('syncStatus');
+  const syncStatusText = document.getElementById('syncStatusText');
+  const syncStatusTs = document.getElementById('syncStatusTs');
+  const syncDisconnected = document.getElementById('syncDisconnected');
+  const syncConnected = document.getElementById('syncConnected');
+  const syncPanel = document.getElementById('syncPanel');
+
+  if (url) {
+    syncPanel.classList.remove('disconnected');
+    syncStatus.classList.remove('disconnected','error');
+    syncStatusText.innerHTML = `📡 接続中 / Conectado<br><span style="font-size:10px;font-family:monospace;word-break:break-all;">${escapeHtml(url.length > 60 ? url.slice(0,60)+'…' : url)}</span>`;
+    syncStatusTs.textContent = fmtSyncTime(getSyncedAt());
+    syncDisconnected.classList.add('hidden');
+    syncConnected.classList.remove('hidden');
+  } else {
+    syncPanel.classList.add('disconnected');
+    syncStatus.classList.add('disconnected');
+    syncStatusText.textContent = '未接続 / Não conectado';
+    syncStatusTs.textContent = 'ローカルモード / Modo local — listas salvas só neste celular';
+    syncDisconnected.classList.remove('hidden');
+    syncConnected.classList.add('hidden');
+    document.getElementById('syncUrlInput').value = '';
+  }
+
+  // 2) lists
+  const synced = isSynced();
+  ['zone','leader','inspector'].forEach(kind => {
+    const list = loadList(kind);
+    const suffix = (kind === 'zone' ? 'zones' : kind + 's');
+    const target = document.getElementById('list-' + suffix);
+    document.getElementById('cnt-' + suffix).textContent = list.length;
+
+    let html = '';
+    if (list.length === 0) {
+      html = `<div class="list-empty">まだ登録されていません<br>Nenhum item cadastrado${synced ? '<br><br>📋 シートを編集 / Edite a planilha do Google' : ''}</div>`;
+    } else {
+      html = list.map(v => `
+        <div class="list-item">
+          <span class="name">${escapeHtml(v)}${synced ? '<span class="synced-badge">📡 シート</span>' : ''}</span>
+          ${synced ? '' : `<button class="del" data-kind="${kind}" data-val="${escapeHtml(v)}" title="削除">✕</button>`}
+        </div>
+      `).join('');
+    }
+    if (synced) {
+      html += `<div class="list-readonly-hint">📌 読み取り専用 / Somente leitura — para editar, abra a planilha do Google</div>`;
+    }
+    target.innerHTML = html;
+
+    // hide/show add row based on sync mode
+    const addRow = target.parentElement.querySelector('.add-row');
+    if (addRow) addRow.style.display = synced ? 'none' : 'flex';
+  });
+
+  // wire up delete buttons (only when local mode)
+  document.querySelectorAll('#screen-settings .del').forEach(b => {
+    b.onclick = () => {
+      const kind = b.dataset.kind;
+      const val = b.dataset.val;
+      if (confirm(`「${val}」を削除しますか？\nRemover "${val}"?`)) {
+        removeFromList(kind, val);
+        renderSettings();
+        toast('削除しました / Removido');
+      }
+    };
+  });
+}
+
+/* sync panel buttons */
+document.getElementById('btnConnect').addEventListener('click', async () => {
+  const url = document.getElementById('syncUrlInput').value.trim();
+  if (!url) { toast('⚠ URL を入力 / Digite a URL'); return; }
+  if (!url.startsWith('https://script.google.com/')) {
+    if (!confirm('⚠ URL não parece ser do Google Apps Script.\nContinuar mesmo assim?')) return;
+  }
+  setSyncUrl(url);
+  try {
+    await syncFromSheet(false);
+    renderSettings();
+  } catch (e) {
+    setSyncUrl(''); // rollback if first sync fails
+    renderSettings();
+  }
+});
+document.getElementById('btnSyncNow').addEventListener('click', async () => {
+  try { await syncFromSheet(false); renderSettings(); } catch (e) {}
+});
+document.getElementById('btnDisconnect').addEventListener('click', () => {
+  if (!confirm('切断しますか？\nDesconectar?\n(As listas atuais ficam salvas localmente)')) return;
+  setSyncUrl('');
+  localStorage.removeItem(SYNC_AT_KEY);
+  renderSettings();
+  toast('切断しました / Desconectado');
+});
+
+function openSettings() {
+  lastScreen = !document.getElementById('screen-form').classList.contains('hidden') ? 'form' : 'select';
+  document.getElementById('screen-select').classList.add('hidden');
+  document.getElementById('screen-form').classList.add('hidden');
+  document.getElementById('actionBar').classList.add('hidden');
+  document.getElementById('screen-settings').classList.remove('hidden');
+  document.getElementById('btnSettings').textContent = '✕';
+  document.getElementById('topTitle').textContent = '⚙ 設定';
+  document.getElementById('topSub').textContent = 'Configurações';
+  renderSettings();
+  window.scrollTo(0,0);
+}
+function closeSettings() {
+  document.getElementById('screen-settings').classList.add('hidden');
+  document.getElementById('btnSettings').textContent = '⚙';
+  if (lastScreen === 'form' && currentType) {
+    document.getElementById('screen-form').classList.remove('hidden');
+    document.getElementById('actionBar').classList.remove('hidden');
+    const data = DATA[currentType];
+    document.getElementById('topTitle').textContent = data.titleJp;
+    document.getElementById('topSub').textContent = data.titlePt;
+    refreshFormSelects();
+  } else {
+    document.getElementById('screen-select').classList.remove('hidden');
+    document.getElementById('topTitle').textContent = '巡回チェックシート';
+    document.getElementById('topSub').textContent = 'Patrulha Semanal';
+  }
+}
+
+document.getElementById('btnSettings').addEventListener('click', () => {
+  if (document.getElementById('screen-settings').classList.contains('hidden')) {
+    openSettings();
+  } else {
+    closeSettings();
+  }
+});
+
+/* add buttons in settings */
+document.querySelectorAll('[data-add]').forEach(b => {
+  b.addEventListener('click', () => {
+    const kind = b.dataset.add;
+    const inputId = 'new-' + kind;
+    const input = document.getElementById(inputId);
+    if (addToList(kind, input.value)) {
+      input.value = '';
+      renderSettings();
+      toast('追加しました / Adicionado');
+    }
+  });
+});
+/* enter key on add inputs */
+['new-zone','new-leader','new-inspector'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const kind = id.replace('new-','');
+      document.querySelector(`[data-add="${kind}"]`).click();
+    }
+  });
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.querySelectorAll('.choice').forEach(b => {
+  b.addEventListener('click', () => startChecklist(b.dataset.type));
+});
+document.getElementById('btnSwitch').addEventListener('click', () => {
+  if (confirm('別のチェックシートに切替えますか？\n入力中のデータは失われます。\n\nTrocar de checklist? Os dados preenchidos serão perdidos.')) {
+    backToSelector();
+  }
+});
+document.getElementById('btnReset').addEventListener('click', () => {
+  if (confirm('全ての入力をリセットしますか？\nLimpar todos os campos?')) resetForm();
+});
+document.getElementById('btnPdf').addEventListener('click', generatePdf);
+document.getElementById('btnWa').addEventListener('click', shareWhatsApp);
+
+/* set today's date by default */
+function todayISO(d=new Date()){
+  return d.toISOString().slice(0,10);
+}
+
+/* ============================================================
+   FLOW
+   ============================================================ */
+function startChecklist(type) {
+  currentType = type;
+  const data = DATA[type];
+
+  // populate flat list
+  itemFlat = [];
+  data.categories.forEach((cat, ci) => {
+    cat.items.forEach((it, ii) => {
+      itemFlat.push({ catIdx: ci, itemIdx: ii, ...it });
+    });
+  });
+  evals = itemFlat.map(() => "");
+  notes = itemFlat.map(() => "");
+  photos = itemFlat.map(() => []);
+
+  // update top bar
+  document.getElementById('topTitle').textContent = data.titleJp;
+  document.getElementById('topSub').textContent = data.titlePt;
+  document.getElementById('btnSwitch').classList.remove('hidden');
+
+  // populate dropdowns from settings
+  refreshFormSelects();
+
+  // render categories
+  renderCategories();
+
+  // default dates: monday-sunday this week
+  const t = new Date();
+  const dow = t.getDay();   // 0=Sun
+  const monday = new Date(t); monday.setDate(t.getDate() - ((dow + 6) % 7));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  document.getElementById('f-date-start').value = todayISO(monday);
+  document.getElementById('f-date-end').value = todayISO(sunday);
+
+  // show form
+  document.getElementById('screen-select').classList.add('hidden');
+  document.getElementById('screen-form').classList.remove('hidden');
+  document.getElementById('actionBar').classList.remove('hidden');
+
+  updateSummary();
+  window.scrollTo(0,0);
+}
+
+function backToSelector() {
+  currentType = null;
+  document.getElementById('screen-select').classList.remove('hidden');
+  document.getElementById('screen-form').classList.add('hidden');
+  document.getElementById('actionBar').classList.add('hidden');
+  document.getElementById('btnSwitch').classList.add('hidden');
+  document.getElementById('topTitle').textContent = '巡回チェックシート';
+  document.getElementById('topSub').textContent = 'Patrulha Semanal';
+  // reset selects
+  ['f-zone','f-inspector','f-leader'].forEach(id => { document.getElementById(id).value = ''; });
+}
+
+function resetForm() {
+  evals = itemFlat.map(() => "");
+  notes = itemFlat.map(() => "");
+  photos = itemFlat.map(() => []);
+  ['f-zone','f-inspector','f-leader'].forEach(id => { document.getElementById(id).value = ''; });
+  refreshFormSelects();
+  renderCategories();
+  updateSummary();
+  toast('リセットしました / Resetado');
+  window.scrollTo(0,0);
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderCategories() {
+  const data = DATA[currentType];
+  const wrap = document.getElementById('categories');
+  wrap.innerHTML = '';
+
+  let globalNo = 0;
+  data.categories.forEach((cat, ci) => {
+    const block = document.createElement('div');
+    block.className = 'cat-block';
+    block.innerHTML = `
+      <div class="cat-head">
+        <div>
+          <div>${cat.nameJp}</div>
+          <div class="pt">${cat.namePt}</div>
+        </div>
+        <div class="cat-rate" id="rate-${ci}">—</div>
+      </div>
+      <div id="catitems-${ci}"></div>
+    `;
+    wrap.appendChild(block);
+
+    const itemsWrap = block.querySelector('#catitems-'+ci);
+    cat.items.forEach((it, ii) => {
+      globalNo++;
+      const flatIdx = itemFlat.findIndex(f => f.catIdx===ci && f.itemIdx===ii);
+      const itemEl = document.createElement('div');
+      itemEl.className = 'item';
+      itemEl.id = 'item-'+flatIdx;
+      itemEl.innerHTML = `
+        <div>
+          <span class="num">${globalNo}</span>
+          <span class="txt-jp">${escapeHtml(it.jp)}</span>
+          <span class="txt-pt">${escapeHtml(it.pt)}</span>
+        </div>
+        <div class="controls">
+          <button class="btn-eval ok" data-idx="${flatIdx}" data-val="ok">○ OK</button>
+          <button class="btn-eval ng" data-idx="${flatIdx}" data-val="ng">× NG</button>
+        </div>
+        <textarea class="note" data-idx="${flatIdx}"
+          placeholder="指摘事項・備考 / Observações, responsável, etc."></textarea>
+        <div class="photos-wrap" id="photos-wrap-${flatIdx}">
+          <label class="btn-photo">
+            📷 写真追加 / Adicionar foto
+            <input type="file" accept="image/*" capture="environment" multiple data-idx="${flatIdx}" class="photo-input">
+            <span class="photo-count" id="photo-count-${flatIdx}"></span>
+          </label>
+          <div class="photos-row" id="photos-row-${flatIdx}"></div>
+        </div>
+      `;
+      itemsWrap.appendChild(itemEl);
+    });
+  });
+
+  // attach events
+  wrap.querySelectorAll('.btn-eval').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = +btn.dataset.idx;
+      const v = btn.dataset.val;
+      evals[i] = (evals[i] === v) ? "" : v;
+      refreshItem(i);
+      updateSummary();
+    });
+  });
+  wrap.querySelectorAll('.note').forEach(ta => {
+    ta.addEventListener('input', () => {
+      const i = +ta.dataset.idx;
+      notes[i] = ta.value;
+    });
+  });
+  wrap.querySelectorAll('.photo-input').forEach(inp => {
+    inp.addEventListener('change', async (e) => {
+      const i = +inp.dataset.idx;
+      const files = Array.from(e.target.files || []);
+      for (const f of files) {
+        if (photos[i].length >= MAX_PHOTOS_PER_ITEM) {
+          toast(`⚠ 最大 ${MAX_PHOTOS_PER_ITEM} 枚 / Máx ${MAX_PHOTOS_PER_ITEM} fotos`);
+          break;
+        }
+        try {
+          const dataUrl = await resizeImage(f, PHOTO_MAX_DIM, PHOTO_QUALITY);
+          photos[i].push(dataUrl);
+        } catch (err) {
+          console.warn(err);
+          toast('画像エラー / Erro na imagem');
+        }
+      }
+      inp.value = '';
+      renderPhotos(i);
+    });
+  });
+}
+
+function renderPhotos(i) {
+  const row = document.getElementById('photos-row-'+i);
+  if (!row) return;
+  row.innerHTML = photos[i].map((src, pi) => `
+    <div class="photo-thumb">
+      <img src="${src}" alt="">
+      <button class="x" data-idx="${i}" data-pi="${pi}">✕</button>
+    </div>
+  `).join('');
+  row.querySelectorAll('.x').forEach(b => {
+    b.onclick = () => {
+      photos[+b.dataset.idx].splice(+b.dataset.pi, 1);
+      renderPhotos(+b.dataset.idx);
+    };
+  });
+  const cnt = document.getElementById('photo-count-'+i);
+  if (cnt) cnt.textContent = photos[i].length > 0 ? `(${photos[i].length}/${MAX_PHOTOS_PER_ITEM})` : '';
+}
+
+function resizeImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(cv.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function refreshItem(i) {
+  const el = document.getElementById('item-'+i);
+  el.querySelectorAll('.btn-eval').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === evals[i]);
+  });
+  el.classList.toggle('has-ng', evals[i] === 'ng');
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============================================================
+   SUMMARY
+   ============================================================ */
+function updateSummary() {
+  const data = DATA[currentType];
+  const total = itemFlat.length;
+  const ok = evals.filter(v => v === 'ok').length;
+  const ng = evals.filter(v => v === 'ng').length;
+  const pe = total - ok - ng;
+  const evaluated = ok + ng;
+  const rate = evaluated > 0 ? Math.round((ok / evaluated) * 100) : 0;
+
+  document.getElementById('cntOk').textContent = ok;
+  document.getElementById('cntNg').textContent = ng;
+  document.getElementById('cntPe').textContent = pe;
+
+  const fill = document.getElementById('gaugeFill');
+  fill.style.width = rate + '%';
+  fill.className = 'gauge-fill';
+  if (rate < 70) fill.classList.add('danger');
+  else if (rate < 90) fill.classList.add('warn');
+  document.getElementById('gaugeText').textContent = `遵守率 / Taxa: ${rate}%  (${ok}/${evaluated || total})`;
+
+  // per-category
+  const csum = document.getElementById('catSummary');
+  csum.innerHTML = '';
+  data.categories.forEach((cat, ci) => {
+    const items = itemFlat.map((f, idx) => f.catIdx === ci ? idx : -1).filter(i => i >= 0);
+    const cOk = items.filter(i => evals[i] === 'ok').length;
+    const cNg = items.filter(i => evals[i] === 'ng').length;
+    const cEv = cOk + cNg;
+    const cRate = cEv > 0 ? Math.round((cOk / cEv) * 100) : 0;
+    const display = cEv > 0 ? `${cRate}% (${cOk}/${cEv})` : '—';
+
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <div>
+        <div class="name">${cat.nameJp}</div>
+        <div class="pt-name">${cat.namePt}</div>
+      </div>
+      <div class="val">${display}</div>
+    `;
+    csum.appendChild(row);
+
+    // also update header chip
+    const chip = document.getElementById('rate-'+ci);
+    if (chip) chip.textContent = cEv > 0 ? `${cRate}%` : `${items.length}項目`;
+  });
+
+  // NG list
+  const ngList = document.getElementById('ngList');
+  const ngItems = itemFlat.map((f, idx) => evals[idx] === 'ng' ? { ...f, idx } : null).filter(Boolean);
+  if (ngItems.length === 0) {
+    ngList.innerHTML = '';
+  } else {
+    let h = `<h4>⚠ 不適合項目 / Itens Não Conformes (${ngItems.length})</h4>`;
+    ngItems.forEach((it, n) => {
+      const noteTxt = notes[it.idx];
+      let globalNo = 0;
+      for (let k = 0; k <= it.idx; k++) globalNo++;
+      h += `<div class="ng-item">
+        <span class="ng-num">No.${it.idx + 1}</span>${escapeHtml(it.jp)}
+        <span style="color:#888">— ${escapeHtml(it.pt)}</span>
+        ${noteTxt ? `<span class="ng-note">📝 ${escapeHtml(noteTxt)}</span>` : ''}
+      </div>`;
+    });
+    ngList.innerHTML = h;
+  }
+}
+
+/* ============================================================
+   PDF GENERATION — render hidden HTML, capture with html2canvas, output via jsPDF
+   ============================================================ */
+function buildPdfHtml() {
+  const data = DATA[currentType];
+  const zone = document.getElementById('f-zone').value || '';
+  const ds = document.getElementById('f-date-start').value || '';
+  const de = document.getElementById('f-date-end').value || '';
+  const inspector = document.getElementById('f-inspector').value || '';
+  const leader = document.getElementById('f-leader').value || '';
+
+  const fmtDate = iso => {
+    if (!iso) return '　　年　　月　　日（　）';
+    const d = new Date(iso);
+    const wk = ['日','月','火','水','木','金','土'][d.getDay()];
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${wk}）`;
+  };
+
+  let rowsHtml = '';
+  let globalNo = 0;
+  data.categories.forEach((cat, ci) => {
+    const items = itemFlat.map((f, idx) => f.catIdx === ci ? idx : -1).filter(i => i >= 0);
+    items.forEach((flatIdx, ii) => {
+      globalNo++;
+      const it = itemFlat[flatIdx];
+      const ev = evals[flatIdx];
+      const evCell = ev === 'ok' ? '<span class="ev-ok">○</span>' : ev === 'ng' ? '<span class="ev-ng">×</span>' : '';
+      // compute rate for category, only on first row
+      let rateCell = '';
+      if (ii === 0) {
+        const cOk = items.filter(i => evals[i] === 'ok').length;
+        const cNg = items.filter(i => evals[i] === 'ng').length;
+        const cEv = cOk + cNg;
+        const cRate = cEv > 0 ? Math.round((cOk / cEv) * 100) + '%' : '';
+        rateCell = `<td class="col-rate" rowspan="${items.length}">${cRate}<br><span style="font-size:9px;color:#666">(${cOk}/${cEv || items.length})</span></td>`;
+      }
+      let catCell = '';
+      if (ii === 0) {
+        catCell = `<td class="col-cat" rowspan="${items.length}">${cat.nameJp}</td>`;
+      }
+      rowsHtml += `<tr>
+        ${catCell}
+        <td class="col-no">${globalNo}</td>
+        <td class="col-item">${escapeHtml(it.jp)}<br><span style="font-size:9px;color:#555">${escapeHtml(it.pt)}</span></td>
+        <td class="col-eval">${evCell}</td>
+        ${rateCell}
+        <td class="col-note">${escapeHtml(notes[flatIdx] || '')}</td>
+      </tr>`;
+    });
+  });
+
+  const total = itemFlat.length;
+  const ok = evals.filter(v => v === 'ok').length;
+  const ng = evals.filter(v => v === 'ng').length;
+  const pe = total - ok - ng;
+  const evaluated = ok + ng;
+  const overall = evaluated > 0 ? Math.round((ok/evaluated)*100) : 0;
+
+  return `
+    <div class="pdf-header">
+      <div class="pdf-title">${data.titleJp}</div>
+      <div class="pdf-leader">
+        <div class="lh">職長</div>
+        <div class="lv">${escapeHtml(leader)}</div>
+      </div>
+      <div class="pdf-meta">
+        <div>ゾーン</div><div>${escapeHtml(zone)}</div>
+        <div>実施日</div><div>${fmtDate(ds)} ～ ${fmtDate(de)}</div>
+        <div>巡回者</div><div>${escapeHtml(inspector)}</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-cat">区分</th>
+          <th class="col-no">NO.</th>
+          <th class="col-item">チェック項目（評価は○、×）/ Item de checagem</th>
+          <th class="col-eval">評価</th>
+          <th class="col-rate">遵守率</th>
+          <th class="col-note">指摘事項・備考（チェック内容、違反者等）/ Observações</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="pdf-summary">
+      <div><div>総合遵守率</div><div class="v">${overall}%</div><div style="font-size:9px;color:#555">Taxa Geral</div></div>
+      <div><div>適合 ○</div><div class="v" style="color:#1b5e20">${ok}</div><div style="font-size:9px;color:#555">Conforme</div></div>
+      <div><div>不適 ×</div><div class="v" style="color:#b71c1c">${ng}</div><div style="font-size:9px;color:#555">Não Conforme</div></div>
+      <div><div>未記入</div><div class="v" style="color:#555">${pe}</div><div style="font-size:9px;color:#555">Pendente</div></div>
+    </div>
+    ${buildPdfPhotosSection()}
+  `;
+}
+
+function buildPdfPhotosSection() {
+  // gather NG items that have photos
+  const withPhotos = itemFlat
+    .map((f, idx) => ({ ...f, idx }))
+    .filter(f => evals[f.idx] === 'ng' && photos[f.idx] && photos[f.idx].length > 0);
+  if (withPhotos.length === 0) return '';
+
+  let html = `<div style="margin-top:16px; padding-top:10px; border-top:2px solid #b71c1c;">
+    <h3 style="font-size:13px; color:#b71c1c; margin:0 0 10px;">📷 写真エビデンス / Evidências Fotográficas (${withPhotos.length})</h3>`;
+  withPhotos.forEach(f => {
+    html += `<div style="margin-bottom:14px; page-break-inside:avoid;">
+      <div style="font-size:11px; font-weight:600; margin-bottom:4px;">
+        <span style="background:#b71c1c; color:#fff; padding:2px 6px; border-radius:3px; margin-right:6px;">No.${f.idx+1}</span>
+        ${escapeHtml(f.jp)}
+      </div>
+      <div style="font-size:10px; color:#555; margin-bottom:6px;">${escapeHtml(f.pt)}</div>
+      ${notes[f.idx] ? `<div style="font-size:10px; color:#444; font-style:italic; margin-bottom:6px;">📝 ${escapeHtml(notes[f.idx])}</div>` : ''}
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        ${photos[f.idx].map(src => `<img src="${src}" style="width:200px; height:150px; object-fit:cover; border:1px solid #999; border-radius:4px;">`).join('')}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+async function renderPdfBlob() {
+  const html = buildPdfHtml();
+  const target = document.getElementById('pdf-render');
+  target.innerHTML = html;
+
+  // wait one frame for layout
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+  const canvas = await html2canvas(target, {
+    scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false
+  });
+  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+  const { jsPDF } = window.jspdf;
+  // A4 landscape — original sheet is landscape oriented
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 6;
+  const usableW = pageW - margin * 2;
+  const imgW = usableW;
+  const imgH = (canvas.height * imgW) / canvas.width;
+
+  // if it fits one page, single. else, split into pages.
+  if (imgH <= pageH - margin * 2) {
+    pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH);
+  } else {
+    // multi-page: slice the canvas
+    const pageCanvasH = (canvas.width * (pageH - margin * 2)) / usableW;
+    let y = 0;
+    let firstPage = true;
+    while (y < canvas.height) {
+      const sliceH = Math.min(pageCanvasH, canvas.height - y);
+      const slice = document.createElement('canvas');
+      slice.width = canvas.width;
+      slice.height = sliceH;
+      const ctx = slice.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, slice.width, slice.height);
+      ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+      const sliceData = slice.toDataURL('image/jpeg', 0.92);
+      const sliceImgH = (sliceH * imgW) / canvas.width;
+      if (!firstPage) pdf.addPage();
+      pdf.addImage(sliceData, 'JPEG', margin, margin, imgW, sliceImgH);
+      firstPage = false;
+      y += sliceH;
+    }
+  }
+
+  return pdf.output('blob');
+}
+
+function buildFilename(ext='pdf') {
+  const data = DATA[currentType];
+  const ds = document.getElementById('f-date-start').value || todayISO();
+  const zone = (document.getElementById('f-zone').value || 'zone').replace(/[^\w\-]/g,'_');
+  const t = currentType === 'safety' ? '安全巡回' : '品質巡回';
+  return `${t}_${zone}_${ds}.${ext}`;
+}
+
+async function generatePdf() {
+  if (!validateBeforeExport()) return;
+  showLoading('PDF生成中... / Gerando PDF...');
+  try {
+    const blob = await renderPdfBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = buildFilename('pdf');
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('PDFを保存しました / PDF salvo');
+    // fire-and-forget — save record to Google Sheets if connected
+    sendHistoryToSheet();
+  } catch (e) {
+    console.error(e);
+    alert('PDF生成エラー / Erro ao gerar PDF: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+/* ============================================================
+   WHATSAPP SHARE — uses Web Share API for file attach when available
+   ============================================================ */
+function buildWhatsAppText() {
+  const data = DATA[currentType];
+  const zone = document.getElementById('f-zone').value || '-';
+  const ds = document.getElementById('f-date-start').value || '-';
+  const de = document.getElementById('f-date-end').value || '-';
+  const inspector = document.getElementById('f-inspector').value || '-';
+  const leader = document.getElementById('f-leader').value || '-';
+
+  const total = itemFlat.length;
+  const ok = evals.filter(v => v === 'ok').length;
+  const ng = evals.filter(v => v === 'ng').length;
+  const evaluated = ok + ng;
+  const rate = evaluated > 0 ? Math.round((ok/evaluated)*100) : 0;
+
+  let txt = `📋 *${data.titleJp}*\n_${data.titlePt}_\n\n`;
+  txt += `🏷 ゾーン / Zona: ${zone}\n`;
+  txt += `📅 期間 / Período: ${ds} ～ ${de}\n`;
+  txt += `👤 巡回者 / Inspetor: ${inspector}\n`;
+  txt += `👷 職長 / Líder: ${leader}\n\n`;
+  txt += `📊 *結果 / Resultado*\n`;
+  txt += `   遵守率 / Taxa: *${rate}%*\n`;
+  txt += `   ○ ${ok}   × ${ng}   未 ${total-ok-ng}\n`;
+
+  const ngItems = itemFlat.map((f, idx) => evals[idx] === 'ng' ? { ...f, idx } : null).filter(Boolean);
+  if (ngItems.length > 0) {
+    txt += `\n⚠ *不適合項目 / Não Conformes*\n`;
+    ngItems.forEach(it => {
+      txt += `• No.${it.idx+1} ${it.jp}\n`;
+      if (notes[it.idx]) txt += `   📝 ${notes[it.idx]}\n`;
+    });
+  }
+  txt += `\n📎 PDFを添付してください / Anexe o PDF.`;
+  return txt;
+}
+
+async function shareWhatsApp() {
+  if (!validateBeforeExport()) return;
+  showLoading('準備中... / Preparando...');
+  try {
+    const blob = await renderPdfBlob();
+    const filename = buildFilename('pdf');
+    const file = new File([blob], filename, { type: 'application/pdf' });
+    const text = buildWhatsAppText();
+
+    // Try Web Share API with files (mobile only — lets user pick WhatsApp and attach PDF)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      hideLoading();
+      try {
+        await navigator.share({ files: [file], text, title: filename });
+        toast('共有しました / Compartilhado');
+        sendHistoryToSheet();
+        return;
+      } catch (e) {
+        if (e.name !== 'AbortError') console.warn(e);
+        return;
+      }
+    }
+
+    // Fallback: download PDF + open WhatsApp Web/App with text
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    hideLoading();
+
+    sendHistoryToSheet();
+    const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    setTimeout(() => {
+      if (confirm('PDFをダウンロードしました。\nWhatsAppを開いてPDFを添付してください。\n\nO PDF foi baixado. Abrir o WhatsApp para anexar manualmente?')) {
+        window.open(wa, '_blank');
+      }
+    }, 600);
+  } catch (e) {
+    console.error(e);
+    hideLoading();
+    alert('エラー / Erro: ' + e.message);
+  }
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function validateBeforeExport() {
+  if (!document.getElementById('f-zone').value.trim()) {
+    toast('⚠ ゾーンを選択 / Selecione a Zona');
+    document.getElementById('f-zone').focus();
+    return false;
+  }
+  if (!document.getElementById('f-inspector').value.trim()) {
+    toast('⚠ 巡回者を選択 / Selecione o Inspetor');
+    document.getElementById('f-inspector').focus();
+    return false;
+  }
+  if (!document.getElementById('f-leader').value.trim()) {
+    toast('⚠ 職長を選択 / Selecione o Líder');
+    document.getElementById('f-leader').focus();
+    return false;
+  }
+  return true;
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function showLoading(msg) {
+  document.getElementById('loadingMsg').textContent = msg || '...';
+  document.getElementById('loading').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading').classList.remove('show');
+}
+
+/* ============================================================
+   AUTO-SYNC ON STARTUP if URL configured
+   ============================================================ */
+(async function autoSyncOnStartup() {
+  if (!isSynced()) return;
+  // run silently in background — don't block UI
+  try {
+    await syncFromSheet(true);
+    // if user is on settings screen when sync finishes, refresh the view
+    if (!document.getElementById('screen-settings').classList.contains('hidden')) {
+      renderSettings();
+    }
+    // if user is on form, refresh dropdowns
+    if (!document.getElementById('screen-form').classList.contains('hidden')) {
+      refreshFormSelects();
+    }
+    toast('🔄 リスト更新 / Listas atualizadas');
+  } catch (e) {
+    // silent fail — user can manually sync from settings
+  }
+})();
+</script>
+</body>
+</html>
