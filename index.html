@@ -377,7 +377,11 @@ html, body {
   border: 1px solid #000; padding: 2px 5px; vertical-align: middle; line-height: 1.25;
 }
 #pdf-render th { background: #f0f0f0; font-weight: 600; text-align: center; padding: 4px 5px; }
-#pdf-render .col-cat { width: 56px; text-align: center; writing-mode: vertical-rl; font-size: 11px; }
+#pdf-render .col-cat {
+  width: 50px; text-align: center; font-size: 11px;
+  line-height: 1.15; padding: 4px 2px; vertical-align: middle;
+  letter-spacing: 0; word-break: keep-all;
+}
 #pdf-render .col-no { width: 32px; text-align: center; }
 #pdf-render .col-item { width: 360px; }
 #pdf-render .col-eval { width: 48px; text-align: center; font-size: 15px; font-weight: 700; }
@@ -1353,7 +1357,10 @@ function buildPdfHtml() {
       }
       let catCell = '';
       if (ii === 0) {
-        catCell = `<td class="col-cat" rowspan="${items.length}">${cat.nameJp}</td>`;
+        // render each character on its own line (manual vertical layout —
+        // works reliably in html2canvas, unlike CSS writing-mode)
+        const verticalName = cat.nameJp.split('').map(escapeHtml).join('<br>');
+        catCell = `<td class="col-cat" rowspan="${items.length}">${verticalName}</td>`;
       }
       rowsHtml += `<tr>
         ${catCell}
