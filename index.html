@@ -741,8 +741,22 @@ function fmtSyncTime(iso) {
   return `最終同期 / Última: ${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/* Send checklist record to Google Sheets (fire-and-forget). */
-async function sendHistoryToSheet() {
+/* Converte um Blob em string base64 (sem o prefixo "data:..."). */
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const r = String(reader.result || '');
+      const comma = r.indexOf(',');
+      resolve(comma >= 0 ? r.slice(comma + 1) : r);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
+/* Send checklist record (and optionally the PDF) to Google Sheets / Drive. */
+async function sendHistoryToSheet(pdfBlob) {
   const url = getSyncUrl();
   if (!url) return; // not connected — skip
   const data = DATA[currentType];
@@ -768,6 +782,16 @@ async function sendHistoryToSheet() {
     rate: rate, photoCount: photoCount, ngItems: ngItems
   };
 
+  // anexa o PDF (em base64) se foi passado — o GAS salva no Drive
+  if (pdfBlob) {
+    try {
+      payload.pdfBase64 = await blobToBase64(pdfBlob);
+      payload.pdfFilename = buildFilename('pdf');
+    } catch (e) {
+      console.warn('PDF base64 conversion failed:', e);
+    }
+  }
+
   // URLSearchParams sends as application/x-www-form-urlencoded
   // — guaranteed "simple request" (no CORS preflight) and survives 302 redirects on Apps Script.
   const body = new URLSearchParams({ payload: JSON.stringify(payload) });
@@ -780,10 +804,17 @@ async function sendHistoryToSheet() {
     let json;
     try { json = await res.json(); } catch (_) { json = { ok: false, error: 'Resposta não-JSON' }; }
     if (json && json.ok) {
-      toast('☁ シート保存 / Salvo na planilha');
+      if (json.pdfUrl && !String(json.pdfUrl).startsWith('ERRO')) {
+        toast('☁ シート保存 + 📁 Drive 保存');
+        // guarda o link pra mostrar depois (ou abrir, se quiser)
+        window.lastDrivePdfUrl = json.pdfUrl;
+      } else {
+        toast('☁ シート保存 / Salvo na planilha');
+        if (json.pdfUrl) console.warn('Drive save failed:', json.pdfUrl);
+      }
     } else {
       console.warn('Save failed:', json);
-      toast('⚠ シート未保存 / Não salvo: ' + (json.error || 'erro desconhecido'));
+      toast('⚠ シート未保存 / Não salvo: ' + ((json && json.error) || 'erro desconhecido'));
     }
   } catch (e) {
     console.warn('History POST failed:', e);
@@ -1575,8 +1606,9 @@ async function generatePdf() {
     // ⚠ IMPORTANTE: salvar na planilha ANTES do download.
     // O click() de download interrompe requests pendentes em alguns mobile browsers
     // (iOS Safari especialmente), então fire-and-forget aqui não funcionava.
-    showLoading('☁ シート保存中... / Salvando na planilha...');
-    await sendHistoryToSheet();
+    // Passa o blob pra também salvar no Drive.
+    showLoading('☁ シート/Drive 保存中... / Salvando na planilha e Drive...');
+    await sendHistoryToSheet(blob);
     // agora dispara o download
     showLoading('💾 ダウンロード中... / Baixando PDF...');
     const url = URL.createObjectURL(blob);
@@ -1640,10 +1672,10 @@ async function shareWhatsApp() {
     const file = new File([blob], filename, { type: 'application/pdf' });
     const text = buildWhatsAppText();
 
-    // Salva na planilha ANTES de qualquer compartilhamento/download —
+    // Salva na planilha + Drive ANTES de qualquer compartilhamento/download —
     // o navigator.share e o a.click() podem interromper requests pendentes.
-    showLoading('☁ シート保存中... / Salvando na planilha...');
-    await sendHistoryToSheet();
+    showLoading('☁ シート/Drive 保存中... / Salvando na planilha e Drive...');
+    await sendHistoryToSheet(blob);
 
     // Try Web Share API with files (mobile only — lets user pick WhatsApp and attach PDF)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {

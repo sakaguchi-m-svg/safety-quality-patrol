@@ -252,6 +252,7 @@ html, body {
           <th>職長 / Líder</th>
           <th style="text-align:right">遵守率</th>
           <th style="text-align:center">○/×</th>
+          <th style="text-align:center">PDF</th>
         </tr>
       </thead>
       <tbody id="recentBody"></tbody>
@@ -530,13 +531,17 @@ function renderRecent(recs) {
   }).slice(0, 20);
   const tb = document.getElementById('recentBody');
   if (sorted.length === 0) {
-    tb.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#888; padding:14px;">データなし / Sem dados</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#888; padding:14px;">データなし / Sem dados</td></tr>`;
     return;
   }
   tb.innerHTML = sorted.map(r => {
     const rate = Number(r['Taxa%']) || 0;
     const typeIc = String(r.Tipo).indexOf('安全') >= 0 ? '🦺' : '📦';
     const typeShort = String(r.Tipo).indexOf('安全') >= 0 ? '安全' : '品質';
+    const pdfRaw = String(r.PDF || '').trim();
+    const pdfCell = pdfRaw && pdfRaw.startsWith('http')
+      ? `<a href="${escapeHtml(pdfRaw)}" target="_blank" style="text-decoration:none;font-size:14px;" title="Abrir PDF">📄</a>`
+      : '<span style="color:#ccc">—</span>';
     return `<tr>
       <td>${fmtDate(parseDate(r.Carimbo))}</td>
       <td>${typeIc} ${typeShort}</td>
@@ -545,6 +550,7 @@ function renderRecent(recs) {
       <td>${escapeHtml(r.Lider)}</td>
       <td style="text-align:right" class="rate ${rateClass(rate)}">${rate}%</td>
       <td style="text-align:center; font-size:11px; color:#666">${r.OK}/${r.NG}</td>
+      <td style="text-align:center">${pdfCell}</td>
     </tr>`;
   }).join('');
 }
