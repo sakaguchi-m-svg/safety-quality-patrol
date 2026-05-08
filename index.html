@@ -806,7 +806,6 @@ async function sendHistoryToSheet(pdfBlob) {
     if (json && json.ok) {
       if (json.pdfUrl && !String(json.pdfUrl).startsWith('ERRO')) {
         toast('☁ シート保存 + 📁 Drive 保存');
-        // guarda o link pra mostrar depois (ou abrir, se quiser)
         window.lastDrivePdfUrl = json.pdfUrl;
       } else {
         toast('☁ シート保存 / Salvo na planilha');
@@ -1610,7 +1609,6 @@ async function generatePdf() {
     // ⚠ IMPORTANTE: salvar na planilha ANTES do download.
     // O click() de download interrompe requests pendentes em alguns mobile browsers
     // (iOS Safari especialmente), então fire-and-forget aqui não funcionava.
-    // Passa o blob pra também salvar no Drive.
     showLoading('☁ シート/Drive 保存中... / Salvando na planilha e Drive...');
     await sendHistoryToSheet(blob);
     // agora dispara o download
