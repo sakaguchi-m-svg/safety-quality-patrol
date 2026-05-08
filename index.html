@@ -684,7 +684,7 @@ const SYNC_AT_KEY = 'patrulha:syncedAt';
  * configurado nada localmente. Para desativar o "auto-conectar",
  * deixe esta string vazia ('').
  * ─────────────────────────────────────────────────────────── */
-const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxF_bwHfSIhrX9WNpDsgCrqaODsUGYI5jei6JvlvC7uQzA3ouYxnC2_IS1SnLsVfJNz/exec';
+const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwIZcE465yhGx4SzoLF1SAZg8mG5gfsE0aEgeTUjKo2AEjGySHvguVBu9wawZspi7K/exec';
 
 const DEFAULTS = {
   zone: ['A-1','A-2','B-1','B-2','C-1'],
@@ -1593,9 +1593,13 @@ async function renderPdfBlob() {
 function buildFilename(ext='pdf') {
   const data = DATA[currentType];
   const ds = document.getElementById('f-date-start').value || todayISO();
-  const zone = (document.getElementById('f-zone').value || 'zone').replace(/[^\w\-]/g,'_');
+  // sanitize: remove apenas caracteres ilegais em nome de arquivo (mantém japonês)
+  const sanitize = s => String(s || '').replace(/[\\/:*?"<>|]/g, '_').trim();
+  const zone = sanitize(document.getElementById('f-zone').value) || 'zone';
+  const inspector = sanitize(document.getElementById('f-inspector').value);
   const t = currentType === 'safety' ? '安全巡回' : '品質巡回';
-  return `${t}_${zone}_${ds}.${ext}`;
+  const insp = inspector ? `_(${inspector})` : '';
+  return `${t}_${zone}_${ds}${insp}.${ext}`;
 }
 
 async function generatePdf() {
