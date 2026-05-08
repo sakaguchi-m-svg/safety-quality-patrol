@@ -1572,14 +1572,19 @@ async function generatePdf() {
   showLoading('PDF生成中... / Gerando PDF...');
   try {
     const blob = await renderPdfBlob();
+    // ⚠ IMPORTANTE: salvar na planilha ANTES do download.
+    // O click() de download interrompe requests pendentes em alguns mobile browsers
+    // (iOS Safari especialmente), então fire-and-forget aqui não funcionava.
+    showLoading('☁ シート保存中... / Salvando na planilha...');
+    await sendHistoryToSheet();
+    // agora dispara o download
+    showLoading('💾 ダウンロード中... / Baixando PDF...');
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = buildFilename('pdf');
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast('PDFを保存しました / PDF salvo');
-    // fire-and-forget — save record to Google Sheets if connected
-    sendHistoryToSheet();
   } catch (e) {
     console.error(e);
     alert('PDF生成エラー / Erro ao gerar PDF: ' + e.message);
@@ -1635,13 +1640,17 @@ async function shareWhatsApp() {
     const file = new File([blob], filename, { type: 'application/pdf' });
     const text = buildWhatsAppText();
 
+    // Salva na planilha ANTES de qualquer compartilhamento/download —
+    // o navigator.share e o a.click() podem interromper requests pendentes.
+    showLoading('☁ シート保存中... / Salvando na planilha...');
+    await sendHistoryToSheet();
+
     // Try Web Share API with files (mobile only — lets user pick WhatsApp and attach PDF)
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       hideLoading();
       try {
         await navigator.share({ files: [file], text, title: filename });
         toast('共有しました / Compartilhado');
-        sendHistoryToSheet();
         return;
       } catch (e) {
         if (e.name !== 'AbortError') console.warn(e);
@@ -1657,7 +1666,6 @@ async function shareWhatsApp() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     hideLoading();
 
-    sendHistoryToSheet();
     const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
     setTimeout(() => {
       if (confirm('PDFをダウンロードしました。\nWhatsAppを開いてPDFを添付してください。\n\nO PDF foi baixado. Abrir o WhatsApp para anexar manualmente?')) {
