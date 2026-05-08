@@ -506,6 +506,7 @@ html, body {
       <div id="syncConnected" class="hidden">
         <div class="sync-actions">
           <button class="btn-sync" id="btnSyncNow">🔄 今すぐ同期 / Sincronizar agora</button>
+          <button class="btn-sync" id="btnDiagnose" style="background:#fb8c00;">🩺 接続テスト / Testar conexão</button>
           <button class="btn-disconnect" id="btnDisconnect">✕ 切断 / Desconectar</button>
         </div>
       </div>
@@ -767,21 +768,63 @@ async function sendHistoryToSheet() {
     rate: rate, photoCount: photoCount, ngItems: ngItems
   };
 
+  // URLSearchParams sends as application/x-www-form-urlencoded
+  // — guaranteed "simple request" (no CORS preflight) and survives 302 redirects on Apps Script.
+  const body = new URLSearchParams({ payload: JSON.stringify(payload) });
   try {
-    // text/plain Content-Type avoids CORS preflight to Google Apps Script
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
+      body: body,
       redirect: 'follow'
     });
-    const json = await res.json();
-    if (json.ok) toast('☁ シート保存 / Salvo na planilha');
-    else console.warn('Save failed:', json);
+    let json;
+    try { json = await res.json(); } catch (_) { json = { ok: false, error: 'Resposta não-JSON' }; }
+    if (json && json.ok) {
+      toast('☁ シート保存 / Salvo na planilha');
+    } else {
+      console.warn('Save failed:', json);
+      toast('⚠ シート未保存 / Não salvo: ' + (json.error || 'erro desconhecido'));
+    }
   } catch (e) {
     console.warn('History POST failed:', e);
-    // silent — user already has the PDF
+    toast('⚠ シート未保存 / Falha ao salvar: ' + e.message);
   }
+}
+
+/* Diagnóstico: testa GET (lists) + GET (history) + POST (history). */
+async function diagnoseSync() {
+  const url = getSyncUrl();
+  if (!url) { alert('URL não configurada'); return; }
+  const log = [];
+  // 1) GET lists
+  try {
+    const r = await fetch(url, { method: 'GET', redirect: 'follow' });
+    const j = await r.json();
+    log.push(`✅ GET listas — ${(j.zones||[]).length} zonas, ${(j.leaders||[]).length} líderes, ${(j.inspectors||[]).length} inspetores`);
+  } catch (e) { log.push('❌ GET listas — ' + e.message); }
+  // 2) GET history
+  try {
+    const sep = url.includes('?') ? '&' : '?';
+    const r = await fetch(url + sep + 'action=history', { redirect: 'follow' });
+    const j = await r.json();
+    if (j.error) log.push('❌ GET histórico — ' + j.error);
+    else log.push(`✅ GET histórico — ${(j.records||[]).length} registros na planilha`);
+  } catch (e) { log.push('❌ GET histórico — ' + e.message); }
+  // 3) POST sample
+  try {
+    const sample = {
+      type: 'TEST_DIAGNOSTICO', zone: '__test__', dateStart: '2026-01-01', dateEnd: '2026-01-01',
+      inspector: 'diagnose', leader: 'diagnose', total: 1, ok: 1, ng: 0, pending: 0,
+      rate: 100, photoCount: 0, ngItems: []
+    };
+    const body = new URLSearchParams({ payload: JSON.stringify(sample) });
+    const r = await fetch(url, { method: 'POST', body, redirect: 'follow' });
+    let j;
+    try { j = await r.json(); } catch (_) { j = { ok: false, error: 'resposta não-JSON' }; }
+    if (j.ok) log.push('✅ POST teste — gravação OK (linha "TEST_DIAGNOSTICO" criada na aba Historico)');
+    else log.push('❌ POST teste — ' + (j.error || JSON.stringify(j)));
+  } catch (e) { log.push('❌ POST teste — ' + e.message); }
+  alert('🩺 Diagnóstico:\n\n' + log.join('\n\n') + '\n\n💡 Se POST falhar mas GET funcionar: você precisa REIMPLANTAR o Apps Script (Implantar → Gerenciar implantações → ✏ → Versão: Nova versão → Implantar).');
 }
 
 function loadList(kind) {
@@ -936,6 +979,10 @@ document.getElementById('btnConnect').addEventListener('click', async () => {
 });
 document.getElementById('btnSyncNow').addEventListener('click', async () => {
   try { await syncFromSheet(false); renderSettings(); } catch (e) {}
+});
+document.getElementById('btnDiagnose').addEventListener('click', async () => {
+  showLoading('🩺 テスト中... / Testando...');
+  try { await diagnoseSync(); } finally { hideLoading(); }
 });
 document.getElementById('btnDisconnect').addEventListener('click', () => {
   if (!confirm('切断しますか？\nDesconectar?\n(As listas atuais ficam salvas localmente)')) return;
