@@ -1593,12 +1593,14 @@ function buildFilename(ext='pdf') {
   const data = DATA[currentType];
   // sanitize: remove apenas caracteres ilegais em nome de arquivo (mantém japonês)
   const sanitize = s => String(s || '').replace(/[\\/:*?"<>|]/g, '_').trim();
-  const ds = document.getElementById('f-date-start').value || todayISO();
-  const de = document.getElementById('f-date-end').value || ds;
+  // Converte "2026-05-11" → "260511" (AA + MM + DD)
+  const fmtShort = iso => iso ? iso.slice(2,4) + iso.slice(5,7) + iso.slice(8,10) : '';
+  const ds = fmtShort(document.getElementById('f-date-start').value || todayISO());
+  const de = fmtShort(document.getElementById('f-date-end').value || document.getElementById('f-date-start').value || todayISO());
   const zone = sanitize(document.getElementById('f-zone').value) || 'zone';
   const inspector = sanitize(document.getElementById('f-inspector').value);
   const t = currentType === 'safety' ? '安全巡回' : '品質巡回';
-  // Formato: 2026-05-08~2026-05-12 【A-1】安全巡回（山田太郎）.pdf
+  // Formato: 260508~260512 【A-1】安全巡回（山田太郎）.pdf
   const insp = inspector ? `（${inspector}）` : '';
   return `${ds}~${de} 【${zone}】${t}${insp}.${ext}`;
 }
