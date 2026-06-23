@@ -430,6 +430,11 @@ html, body {
 .ed-move button:disabled { opacity: .28; cursor: default; }
 .ed-add-item { width: 100%; margin-top: 4px; padding: 8px; border: 1px dashed #90caf9;
   background: #fff; color: #1976d2; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.items-save { font-size: 12px; padding: 8px 10px; border-radius: 8px; margin: 10px 0; text-align: center;
+  background: #eceff1; color: #607d8b; transition: background .25s, color .25s; }
+.items-save.ok { color: #2e7d32; }
+.items-save.err { background: #ffebee; color: #c62828; font-weight: 600; }
+.items-save.flash { background: #c8e6c9; color: #1b5e20; font-weight: 700; }
 .items-foot { display: flex; gap: 8px; margin-top: 8px; }
 .items-btn { flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
 .items-btn.add { background: #e8f5e9; color: #2e7d32; }
@@ -597,6 +602,7 @@ html, body {
         <button class="items-tab" data-itype="quality">📦 品質 / Qualidade</button>
       </div>
       <div id="items-editor"></div>
+      <div id="itemsSaveStatus" class="items-save">💾 変更は自動保存されます / As alterações são salvas automaticamente</div>
       <div class="items-foot">
         <button id="btnAddCat" class="items-btn add">+ カテゴリ追加 / Nova categoria</button>
         <button id="btnResetItems" class="items-btn reset">↻ 初期値に戻す / Restaurar padrão</button>
@@ -738,7 +744,29 @@ function saveItems() {
       safety:  { categories: DATA.safety.categories },
       quality: { categories: DATA.quality.categories }
     }));
-  } catch (e) { console.warn('saveItems falhou:', e); }
+    flashItemsSaved(true);
+  } catch (e) {
+    console.warn('saveItems falhou:', e);
+    flashItemsSaved(false);
+  }
+}
+
+/* Atualiza o indicador "Salvo" do editor de itens. */
+let _saveFlashTimer;
+function flashItemsSaved(ok) {
+  const el = document.getElementById('itemsSaveStatus');
+  if (!el) return;
+  if (ok) {
+    const n = new Date();
+    const p = x => String(x).padStart(2, '0');
+    el.textContent = `✓ 保存しました / Salvo  ${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+    el.className = 'items-save ok flash';
+    clearTimeout(_saveFlashTimer);
+    _saveFlashTimer = setTimeout(() => el.classList.remove('flash'), 1200);
+  } else {
+    el.textContent = '⚠ 保存できませんでした / Não foi possível salvar';
+    el.className = 'items-save err';
+  }
 }
 
 /* Cópia de trabalho viva usada em todo o app (substitui o antigo const DATA). */
