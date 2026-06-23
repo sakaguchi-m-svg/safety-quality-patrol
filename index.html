@@ -423,6 +423,11 @@ html, body {
 .ed-fields input[data-auto="1"] { background: #f1f8e9; border-color: #aed581; }
 .ed-del-item { flex: 0 0 auto; border: none; background: #f5f5f5; color: #9e9e9e;
   border-radius: 8px; padding: 8px 10px; cursor: pointer; align-self: center; }
+.ed-move { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; align-self: center; }
+.ed-move button { border: none; background: #eceff1; color: #455a64; border-radius: 6px;
+  width: 30px; height: 22px; font-size: 11px; line-height: 1; padding: 0; cursor: pointer; }
+.ed-move button:active { background: #cfd8dc; }
+.ed-move button:disabled { opacity: .28; cursor: default; }
 .ed-add-item { width: 100%; margin-top: 4px; padding: 8px; border: 1px dashed #90caf9;
   background: #fff; color: #1976d2; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .items-foot { display: flex; gap: 8px; margin-top: 8px; }
@@ -1118,6 +1123,10 @@ function renderItemsEditor() {
         <div class="ed-cat-head">
           <input class="ed-cat-jp" data-ci="${ci}" data-fld="nameJp" value="${escapeHtml(cat.nameJp||'')}" placeholder="カテゴリ名 (日本語)">
           <input class="ed-cat-pt" data-ci="${ci}" data-fld="namePt" value="${escapeHtml(cat.namePt||'')}" placeholder="Categoria (Português)">
+          <div class="ed-move">
+            <button class="ed-cat-up" data-ci="${ci}" ${ci===0?'disabled':''} title="上へ / Subir">▲</button>
+            <button class="ed-cat-down" data-ci="${ci}" ${ci===cats.length-1?'disabled':''} title="下へ / Descer">▼</button>
+          </div>
           <button class="ed-del-cat" data-ci="${ci}" title="カテゴリ削除 / Excluir categoria">🗑</button>
         </div>
         <div class="ed-items">`;
@@ -1128,6 +1137,10 @@ function renderItemsEditor() {
             <div class="ed-fields">
               <input class="ed-jp" data-ci="${ci}" data-ii="${ii}" data-lang="jp" value="${escapeHtml(it.jp||'')}" placeholder="項目 (日本語)">
               <input class="ed-pt" data-ci="${ci}" data-ii="${ii}" data-lang="pt" value="${escapeHtml(it.pt||'')}" placeholder="Item (Português)">
+            </div>
+            <div class="ed-move">
+              <button class="ed-up" data-ci="${ci}" data-ii="${ii}" ${(ci===0&&ii===0)?'disabled':''} title="上へ / Subir">▲</button>
+              <button class="ed-down" data-ci="${ci}" data-ii="${ii}" ${(ci===cats.length-1&&ii===cat.items.length-1)?'disabled':''} title="下へ / Descer">▼</button>
             </div>
             <button class="ed-del-item" data-ci="${ci}" data-ii="${ii}" title="削除 / Excluir">✕</button>
           </div>`;
@@ -1224,6 +1237,39 @@ function wireItemsEditor() {
     DATA[itemsEditType].categories.splice(+b.dataset.ci, 1);
     saveItems(); renderItemsEditor();
   }));
+  wrap.querySelectorAll('.ed-up').forEach(b   => b.addEventListener('click', () => moveItem(+b.dataset.ci, +b.dataset.ii, -1)));
+  wrap.querySelectorAll('.ed-down').forEach(b => b.addEventListener('click', () => moveItem(+b.dataset.ci, +b.dataset.ii, +1)));
+  wrap.querySelectorAll('.ed-cat-up').forEach(b   => b.addEventListener('click', () => moveCat(+b.dataset.ci, -1)));
+  wrap.querySelectorAll('.ed-cat-down').forEach(b => b.addEventListener('click', () => moveCat(+b.dataset.ci, +1)));
+}
+
+/* Move um item ↑/↓. No topo/fim de uma categoria, passa para a categoria vizinha. */
+function moveItem(ci, ii, dir) {
+  const cats = DATA[itemsEditType].categories;
+  const cat = cats[ci];
+  if (!cat) return;
+  const ni = ii + dir;
+  if (ni >= 0 && ni < cat.items.length) {
+    const tmp = cat.items[ii]; cat.items[ii] = cat.items[ni]; cat.items[ni] = tmp;
+  } else if (dir === -1 && ci > 0) {
+    const [it] = cat.items.splice(ii, 1);
+    cats[ci-1].items.push(it);
+  } else if (dir === 1 && ci < cats.length - 1) {
+    const [it] = cat.items.splice(ii, 1);
+    cats[ci+1].items.unshift(it);
+  } else {
+    return;   // já está no extremo absoluto
+  }
+  saveItems(); renderItemsEditor();
+}
+
+/* Move uma categoria inteira ↑/↓. */
+function moveCat(ci, dir) {
+  const cats = DATA[itemsEditType].categories;
+  const ni = ci + dir;
+  if (ni < 0 || ni >= cats.length) return;
+  const tmp = cats[ci]; cats[ci] = cats[ni]; cats[ni] = tmp;
+  saveItems(); renderItemsEditor();
 }
 
 /* botões fixos do editor (existem sempre no HTML) */
@@ -1302,11 +1348,47 @@ function closeSettings() {
   }
 }
 
-document.getElementById('btnSettings').addEventListener('click', () => {
+/* ── Proteção das Configurações por senha (definida no Apps Script) ── */
+const SETTINGS_AUTH_KEY = 'patrulha:settingsAuthed';   // sessionStorage (vale até fechar o app)
+
+async function requestSettingsAccess() {
+  if (sessionStorage.getItem(SETTINGS_AUTH_KEY) === '1') return true;   // já liberado nesta sessão
+  const pw = prompt('🔒 設定パスワード / Senha das configurações:');
+  if (pw === null) return false;                                        // cancelou
+  const url = getSyncUrl();
+  if (!url) {
+    // Sem servidor não há como validar — libera p/ permitir a configuração inicial.
+    sessionStorage.setItem(SETTINGS_AUTH_KEY, '1');
+    return true;
+  }
+  showLoading('🔒 確認中... / Verificando...');
+  try {
+    const full = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=auth&pw=' + encodeURIComponent(pw);
+    const res = await fetch(full, { method: 'GET', redirect: 'follow' });
+    const data = await res.json();
+    hideLoading();
+    if (data && typeof data.ok === 'boolean') {
+      if (data.ok) { sessionStorage.setItem(SETTINGS_AUTH_KEY, '1'); return true; }
+      toast('❌ パスワードが違います / Senha incorreta');
+      return false;
+    }
+    // Resposta sem campo "ok" = script ainda não reimplantado com a ação auth.
+    console.warn('auth: resposta inesperada, script provavelmente não reimplantado', data);
+    alert('⚠ スクリプト未更新 / Script não reimplantado.\n\nパスワード保護は再デプロイ後に有効になります。\nA proteção por senha só ativa depois de reimplantar o script. Abrindo por enquanto.');
+    sessionStorage.setItem(SETTINGS_AUTH_KEY, '1');
+    return true;
+  } catch (e) {
+    hideLoading();
+    alert('確認エラー / Erro ao verificar a senha:\n' + e.message);
+    return false;
+  }
+}
+
+document.getElementById('btnSettings').addEventListener('click', async () => {
   if (document.getElementById('screen-settings').classList.contains('hidden')) {
-    openSettings();
+    if (await requestSettingsAccess()) openSettings();   // só abre com senha
   } else {
-    closeSettings();
+    closeSettings();                                     // fechar não pede senha
   }
 });
 
