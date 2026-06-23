@@ -88,7 +88,7 @@ html, body {
   color: #fff; padding: 10px 16px; font-size: 13px; font-weight: 600;
   display: flex; justify-content: space-between; align-items: center;
 }
-.cat-head .pt { font-size: 11px; opacity: .8; font-weight: 400; }
+.cat-head .pt { font-size: 13px; opacity: 1; font-weight: 400; }
 .cat-rate {
   background: rgba(255,255,255,.2); padding: 3px 8px; border-radius: 10px;
   font-size: 11px;
@@ -103,8 +103,8 @@ html, body {
   text-align: center; line-height: 24px; font-size: 12px; font-weight: 600;
   margin-right: 8px; vertical-align: top;
 }
-.item .txt-jp { display: inline-block; font-size: 14px; line-height: 1.4; width: calc(100% - 36px); }
-.item .txt-pt { display: block; font-size: 12px; color: #666; margin-top: 4px; margin-left: 32px; line-height: 1.35; }
+.item .txt-jp { display: inline-block; font-size: 15px; line-height: 1.5; color: #1a1a1a; width: calc(100% - 36px); }
+.item .txt-pt { display: block; font-size: 15px; color: #1a1a1a; margin-top: 5px; margin-left: 32px; line-height: 1.5; }
 
 .item .controls { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
 .btn-eval {
@@ -193,8 +193,8 @@ html, body {
   padding: 8px 0; border-bottom: 1px solid #f0f0f0;
 }
 .cat-summary .row:last-child { border: none; }
-.cat-summary .name { font-size: 13px; }
-.cat-summary .pt-name { font-size: 11px; color: #888; }
+.cat-summary .name { font-size: 13px; color: #1a1a1a; }
+.cat-summary .pt-name { font-size: 13px; color: #1a1a1a; }
 .cat-summary .val { font-size: 13px; font-weight: 600; color: #1976d2; }
 
 .ng-list { margin-top: 12px; }
@@ -395,6 +395,40 @@ html, body {
 }
 #pdf-render .pdf-summary div { text-align: center; }
 #pdf-render .pdf-summary .v { font-size: 14px; font-weight: 700; }
+
+/* ---- ITEMS EDITOR ---- */
+.items-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.items-tab {
+  flex: 1; padding: 10px; border: 1.5px solid #cfd8dc; background: #fff;
+  border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: #546e7a;
+}
+.items-tab.active { background: #1976d2; border-color: #1976d2; color: #fff; }
+.ed-cat { border: 1px solid #e0e0e0; border-radius: 10px; padding: 10px; margin-bottom: 12px; background: #fafafa; }
+.ed-cat-head { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.ed-cat-head input {
+  flex: 1; min-width: 0; padding: 7px 9px; border: 1px solid #cfd8dc; border-radius: 8px;
+  font-size: 14px; font-weight: 700; color: #1a1a1a;
+}
+.ed-cat-head .ed-cat-pt { font-weight: 700; color: #1a1a1a; }
+.ed-del-cat { flex: 0 0 auto; border: none; background: #ffebee; color: #c62828;
+  border-radius: 8px; padding: 7px 9px; cursor: pointer; font-size: 14px; }
+.ed-item { display: flex; gap: 6px; align-items: flex-start; margin-bottom: 6px; }
+.ed-no { flex: 0 0 22px; text-align: center; font-size: 11px; font-weight: 700; color: #90a4ae; padding-top: 9px; }
+.ed-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ed-fields input {
+  width: 100%; padding: 8px 9px; border: 1px solid #cfd8dc; border-radius: 8px;
+  font-size: 14px; color: #1a1a1a; box-sizing: border-box;
+}
+.ed-fields .ed-pt { font-size: 14px; color: #1a1a1a; }
+.ed-fields input[data-auto="1"] { background: #f1f8e9; border-color: #aed581; }
+.ed-del-item { flex: 0 0 auto; border: none; background: #f5f5f5; color: #9e9e9e;
+  border-radius: 8px; padding: 8px 10px; cursor: pointer; align-self: center; }
+.ed-add-item { width: 100%; margin-top: 4px; padding: 8px; border: 1px dashed #90caf9;
+  background: #fff; color: #1976d2; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.items-foot { display: flex; gap: 8px; margin-top: 8px; }
+.items-btn { flex: 1; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+.items-btn.add { background: #e8f5e9; color: #2e7d32; }
+.items-btn.reset { background: #fff3e0; color: #e65100; }
 </style>
 </head>
 <body>
@@ -544,6 +578,25 @@ html, body {
         <button data-add="inspector">+ 追加</button>
       </div>
     </div>
+
+    <!-- EDITOR DE ITENS DO CHECKLIST -->
+    <div class="panel">
+      <h3>📋 チェック項目 / Itens analisados</h3>
+      <div class="settings-hint" style="margin:4px 0 10px;">
+        項目を編集すると次回の巡回から反映されます。<br>
+        Edite os itens analisados — valem na próxima patrulha.<br>
+        ✍️ 片方の言語を入力すると自動で翻訳 / Digite em um idioma e o outro é traduzido sozinho (接続時 / requer conexão).
+      </div>
+      <div class="items-tabs">
+        <button class="items-tab active" data-itype="safety">🦺 安全 / Segurança</button>
+        <button class="items-tab" data-itype="quality">📦 品質 / Qualidade</button>
+      </div>
+      <div id="items-editor"></div>
+      <div class="items-foot">
+        <button id="btnAddCat" class="items-btn add">+ カテゴリ追加 / Nova categoria</button>
+        <button id="btnResetItems" class="items-btn reset">↻ 初期値に戻す / Restaurar padrão</button>
+      </div>
+    </div>
   </div>
 
   <!-- ACTION BAR -->
@@ -563,9 +616,9 @@ html, body {
 
 <script>
 /* ============================================================
-   DATA — bilingual checklist items
+   DATA — bilingual checklist items (defaults)
    ============================================================ */
-const DATA = {
+const DEFAULT_DATA = {
   safety: {
     titleJp: "安全巡回チェックシート",
     titlePt: "Checklist de Patrulha de Segurança",
@@ -652,6 +705,39 @@ const DATA = {
     ]
   }
 };
+
+/* ============================================================
+   ITEMS — editable checklist (overrides defaults, salvo localmente)
+   ============================================================ */
+const ITEMS_KEY = 'patrulha:items';
+
+/* Devolve uma cópia de trabalho dos itens: padrão + edições locais. */
+function loadItems() {
+  const base = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  try {
+    const raw = localStorage.getItem(ITEMS_KEY);
+    if (raw) {
+      const custom = JSON.parse(raw);
+      ['safety','quality'].forEach(t => {
+        if (custom[t] && Array.isArray(custom[t].categories)) {
+          base[t].categories = custom[t].categories;
+        }
+      });
+    }
+  } catch (e) { console.warn('loadItems falhou:', e); }
+  return base;
+}
+function saveItems() {
+  try {
+    localStorage.setItem(ITEMS_KEY, JSON.stringify({
+      safety:  { categories: DATA.safety.categories },
+      quality: { categories: DATA.quality.categories }
+    }));
+  } catch (e) { console.warn('saveItems falhou:', e); }
+}
+
+/* Cópia de trabalho viva usada em todo o app (substitui o antigo const DATA). */
+let DATA = loadItems();
 
 /* ============================================================
    STATE
@@ -989,7 +1075,172 @@ function renderSettings() {
       }
     };
   });
+
+  // 3) editor de itens do checklist
+  renderItemsEditor();
 }
+
+/* ============================================================
+   EDITOR DE ITENS + TRADUÇÃO AUTOMÁTICA
+   ============================================================ */
+let itemsEditType = 'safety';      // "safety" | "quality"
+const translateTimers = {};
+
+/* Chama o tradutor do Apps Script (LanguageApp). from/to: 'ja' | 'pt' | '' (auto). */
+async function translateText(text, from, to) {
+  text = (text || '').trim();
+  if (!text) return '';
+  const url = getSyncUrl();
+  if (!url) throw new Error('未接続 / Conecte ao Apps Script (⚙)');
+  const full = url + (url.indexOf('?') >= 0 ? '&' : '?')
+    + 'action=translate'
+    + '&from=' + encodeURIComponent(from)
+    + '&to='   + encodeURIComponent(to)
+    + '&text=' + encodeURIComponent(text);
+  const res = await fetch(full, { method: 'GET', redirect: 'follow' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || 'tradução falhou');
+  return data.text || '';
+}
+
+function renderItemsEditor() {
+  const wrap = document.getElementById('items-editor');
+  if (!wrap) return;
+  document.querySelectorAll('.items-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.itype === itemsEditType));
+
+  const cats = DATA[itemsEditType].categories;
+  let html = '';
+  cats.forEach((cat, ci) => {
+    html += `
+      <div class="ed-cat">
+        <div class="ed-cat-head">
+          <input class="ed-cat-jp" data-ci="${ci}" data-fld="nameJp" value="${escapeHtml(cat.nameJp||'')}" placeholder="カテゴリ名 (日本語)">
+          <input class="ed-cat-pt" data-ci="${ci}" data-fld="namePt" value="${escapeHtml(cat.namePt||'')}" placeholder="Categoria (Português)">
+          <button class="ed-del-cat" data-ci="${ci}" title="カテゴリ削除 / Excluir categoria">🗑</button>
+        </div>
+        <div class="ed-items">`;
+    cat.items.forEach((it, ii) => {
+      html += `
+          <div class="ed-item">
+            <span class="ed-no">${ii+1}</span>
+            <div class="ed-fields">
+              <input class="ed-jp" data-ci="${ci}" data-ii="${ii}" data-lang="jp" value="${escapeHtml(it.jp||'')}" placeholder="項目 (日本語)">
+              <input class="ed-pt" data-ci="${ci}" data-ii="${ii}" data-lang="pt" value="${escapeHtml(it.pt||'')}" placeholder="Item (Português)">
+            </div>
+            <button class="ed-del-item" data-ci="${ci}" data-ii="${ii}" title="削除 / Excluir">✕</button>
+          </div>`;
+    });
+    html += `
+        </div>
+        <button class="ed-add-item" data-ci="${ci}">+ 項目追加 / Adicionar item</button>
+      </div>`;
+  });
+  wrap.innerHTML = html || '<div class="list-empty">カテゴリがありません / Nenhuma categoria</div>';
+  wireItemsEditor();
+}
+
+/* Acha o campo irmão (idioma oposto) de um input do editor. */
+function siblingField(input) {
+  if (input.dataset.lang) {
+    const box = input.closest('.ed-fields');
+    return box && box.querySelector(input.dataset.lang === 'jp' ? '.ed-pt' : '.ed-jp');
+  }
+  if (input.dataset.fld) {
+    const box = input.closest('.ed-cat-head');
+    return box && box.querySelector(input.dataset.fld === 'nameJp' ? '.ed-cat-pt' : '.ed-cat-jp');
+  }
+  return null;
+}
+function fieldLang(input) {
+  if (input.dataset.lang) return input.dataset.lang === 'jp' ? 'ja' : 'pt';
+  if (input.dataset.fld)  return input.dataset.fld === 'nameJp' ? 'ja' : 'pt';
+  return 'pt';
+}
+
+/* Grava o valor de um input de volta em DATA e persiste. */
+function applyFieldToData(input) {
+  const cat = DATA[itemsEditType].categories[+input.dataset.ci];
+  if (!cat) return;
+  if (input.dataset.fld) {
+    cat[input.dataset.fld] = input.value;
+  } else {
+    const it = cat.items[+input.dataset.ii];
+    if (it) it[input.dataset.lang] = input.value;
+  }
+  saveItems();
+}
+
+function scheduleTranslate(input) {
+  const key = (input.dataset.ci||'') + '-' + (input.dataset.ii||'c') + '-' + fieldLang(input);
+  clearTimeout(translateTimers[key]);
+  translateTimers[key] = setTimeout(() => autoTranslateField(input), 900);
+}
+
+/* Traduz o conteúdo de `src` para o campo irmão (só se ele estiver vazio ou for auto). */
+async function autoTranslateField(src) {
+  const text = src.value.trim();
+  if (!text) return;
+  const target = siblingField(src);
+  if (!target) return;
+  if (target.value.trim() && target.dataset.auto !== '1') return;   // não sobrescreve texto manual
+  const from = fieldLang(src);
+  const to   = from === 'ja' ? 'pt' : 'ja';
+  try {
+    const out = await translateText(text, from, to);
+    if (out && out.trim()) {
+      target.value = out;
+      target.dataset.auto = '1';
+      applyFieldToData(target);
+    }
+  } catch (e) {
+    toast('⚠ 自動翻訳できません / ' + e.message);
+  }
+}
+
+function wireItemsEditor() {
+  const wrap = document.getElementById('items-editor');
+  wrap.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      inp.dataset.auto = '0';        // passou a ser texto manual
+      applyFieldToData(inp);
+      scheduleTranslate(inp);
+    });
+  });
+  wrap.querySelectorAll('.ed-del-item').forEach(b => b.addEventListener('click', () => {
+    DATA[itemsEditType].categories[+b.dataset.ci].items.splice(+b.dataset.ii, 1);
+    saveItems(); renderItemsEditor();
+  }));
+  wrap.querySelectorAll('.ed-add-item').forEach(b => b.addEventListener('click', () => {
+    const ci = +b.dataset.ci;
+    DATA[itemsEditType].categories[ci].items.push({ jp:'', pt:'' });
+    saveItems(); renderItemsEditor();
+    const jps = document.querySelectorAll(`.ed-cat:nth-child(${ci+1}) .ed-jp`);
+    if (jps.length) jps[jps.length-1].focus();
+  }));
+  wrap.querySelectorAll('.ed-del-cat').forEach(b => b.addEventListener('click', () => {
+    if (!confirm('このカテゴリと項目を全て削除しますか？\nExcluir esta categoria e todos os itens?')) return;
+    DATA[itemsEditType].categories.splice(+b.dataset.ci, 1);
+    saveItems(); renderItemsEditor();
+  }));
+}
+
+/* botões fixos do editor (existem sempre no HTML) */
+document.querySelectorAll('.items-tab').forEach(t => t.addEventListener('click', () => {
+  itemsEditType = t.dataset.itype;
+  renderItemsEditor();
+}));
+document.getElementById('btnAddCat').addEventListener('click', () => {
+  DATA[itemsEditType].categories.push({ nameJp:'', namePt:'', items:[{ jp:'', pt:'' }] });
+  saveItems(); renderItemsEditor();
+});
+document.getElementById('btnResetItems').addEventListener('click', () => {
+  if (!confirm('この巡回の項目を初期値に戻しますか？編集は消えます。\nRestaurar os itens padrão desta patrulha? Suas edições serão perdidas.')) return;
+  DATA[itemsEditType].categories = JSON.parse(JSON.stringify(DEFAULT_DATA[itemsEditType].categories));
+  saveItems(); renderItemsEditor();
+  toast('初期値に戻しました / Restaurado');
+});
 
 /* sync panel buttons */
 document.getElementById('btnConnect').addEventListener('click', async () => {
@@ -1388,7 +1639,7 @@ function updateSummary() {
       for (let k = 0; k <= it.idx; k++) globalNo++;
       h += `<div class="ng-item">
         <span class="ng-num">No.${it.idx + 1}</span>${escapeHtml(it.jp)}
-        <span style="color:#888">— ${escapeHtml(it.pt)}</span>
+        <span style="color:#1a1a1a">— ${escapeHtml(it.pt)}</span>
         ${noteTxt ? `<span class="ng-note">📝 ${escapeHtml(noteTxt)}</span>` : ''}
       </div>`;
     });
@@ -1442,7 +1693,7 @@ function buildPdfHtml() {
       rowsHtml += `<tr>
         ${catCell}
         <td class="col-no">${globalNo}</td>
-        <td class="col-item">${escapeHtml(it.jp)}<br><span style="font-size:9px;color:#555">${escapeHtml(it.pt)}</span></td>
+        <td class="col-item">${escapeHtml(it.jp)}<br><span style="color:#1a1a1a">${escapeHtml(it.pt)}</span></td>
         <td class="col-eval">${evCell}</td>
         ${rateCell}
         <td class="col-note">${escapeHtml(notes[flatIdx] || '')}</td>
@@ -1513,7 +1764,7 @@ function buildPdfPhotoCards() {
           <span style="background:#b71c1c; color:#fff; padding:3px 9px; border-radius:4px; font-size:13px; font-weight:600; margin-right:8px;">No.${f.idx+1}</span>
           <span style="font-size:14px; font-weight:600;">${escapeHtml(f.jp)}</span>
         </div>
-        <div style="font-size:11px; color:#555; margin-bottom:8px;">${escapeHtml(f.pt)}</div>
+        <div style="font-size:14px; color:#1a1a1a; margin-bottom:8px;">${escapeHtml(f.pt)}</div>
         ${notes[f.idx] ? `<div style="font-size:11px; color:#333; padding:8px 10px; background:#fffbe6; border-left:3px solid #fbc02d; margin-bottom:14px;">📝 ${escapeHtml(notes[f.idx])}</div>` : ''}
         <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
           ${photos[f.idx].map(src => `<img src="${src}" style="width:${w}px; height:${h}px; object-fit:cover; border:1px solid #999; border-radius:4px;">`).join('')}
