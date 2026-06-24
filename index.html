@@ -15,6 +15,7 @@
 <title>巡回チェックシート | Patrulha Semanal</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body {
@@ -137,12 +138,18 @@ html, body {
 .photos-wrap { margin-top: 8px; display: none; }
 .item.has-ng .photos-wrap,
 .item.has-ok .photos-wrap { display: block; }
-.photos-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.photos-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.photo-item { display: flex; flex-direction: column; gap: 4px; width: 120px; }
+.photo-cap {
+  width: 120px; font-size: 11px; padding: 5px 6px; box-sizing: border-box;
+  border: 1px solid #cfd8dc; border-radius: 6px; font-family: inherit;
+}
 .photo-thumb {
   position: relative; width: 64px; height: 64px;
   border-radius: 8px; overflow: hidden; background: #eee;
   border: 1px solid #ccc;
 }
+.photo-item .photo-thumb { width: 120px; height: 90px; }
 .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .photo-thumb .x {
   position: absolute; top: 2px; right: 2px;
@@ -440,6 +447,15 @@ html, body {
   width: 30px; height: 22px; font-size: 11px; line-height: 1; padding: 0; cursor: pointer; }
 .ed-move button:active { background: #cfd8dc; }
 .ed-move button:disabled { opacity: .28; cursor: default; }
+/* alças de arrastar (segurar e mover) */
+.ed-drag, .ed-cat-drag {
+  flex: 0 0 auto; align-self: center; cursor: grab; color: #b0bec5;
+  font-size: 20px; line-height: 1; padding: 2px 4px; user-select: none;
+  touch-action: none;   /* deixa o arraste por toque funcionar */
+}
+.ed-drag:active, .ed-cat-drag:active { cursor: grabbing; color: #607d8b; }
+.sortable-ghost { opacity: .35; }
+.sortable-chosen { background: #e3f2fd; }
 .ed-add-item { width: 100%; margin-top: 4px; padding: 8px; border: 1px dashed #90caf9;
   background: #fff; color: #1976d2; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .items-save { font-size: 12px; padding: 8px 10px; border-radius: 8px; margin: 10px 0; text-align: center;
@@ -1130,6 +1146,7 @@ function renderSettings() {
    ============================================================ */
 let itemsEditType = 'safety';      // "safety" | "quality"
 const translateTimers = {};
+let editorSortables = [];           // instâncias SortableJS ativas no editor
 
 /* Chama o tradutor do Apps Script (LanguageApp). from/to: 'ja' | 'pt' | '' (auto). */
 async function translateText(text, from, to) {
@@ -1152,6 +1169,9 @@ async function translateText(text, from, to) {
 function renderItemsEditor() {
   const wrap = document.getElementById('items-editor');
   if (!wrap) return;
+  // destrói instâncias de drag anteriores antes de recriar o DOM
+  editorSortables.forEach(s => { try { s.destroy(); } catch (e) {} });
+  editorSortables = [];
   document.querySelectorAll('.items-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.itype === itemsEditType));
 
@@ -1161,6 +1181,7 @@ function renderItemsEditor() {
     html += `
       <div class="ed-cat">
         <div class="ed-cat-head">
+          <span class="ed-cat-drag" title="カテゴリを移動 / Arrastar categoria">⠿</span>
           <input class="ed-cat-jp" data-ci="${ci}" data-fld="nameJp" value="${escapeHtml(cat.nameJp||'')}" placeholder="カテゴリ名 (日本語)">
           <input class="ed-cat-pt" data-ci="${ci}" data-fld="namePt" value="${escapeHtml(cat.namePt||'')}" placeholder="Categoria (Português)">
           <div class="ed-move">
@@ -1173,6 +1194,7 @@ function renderItemsEditor() {
     cat.items.forEach((it, ii) => {
       html += `
           <div class="ed-item">
+            <span class="ed-drag" title="ドラッグで移動 / Arrastar">⠿</span>
             <span class="ed-no">${ii+1}</span>
             <div class="ed-fields">
               <input class="ed-jp" data-ci="${ci}" data-ii="${ii}" data-lang="jp" value="${escapeHtml(it.jp||'')}" placeholder="項目 (日本語)">
@@ -1281,6 +1303,49 @@ function wireItemsEditor() {
   wrap.querySelectorAll('.ed-down').forEach(b => b.addEventListener('click', () => moveItem(+b.dataset.ci, +b.dataset.ii, +1)));
   wrap.querySelectorAll('.ed-cat-up').forEach(b   => b.addEventListener('click', () => moveCat(+b.dataset.ci, -1)));
   wrap.querySelectorAll('.ed-cat-down').forEach(b => b.addEventListener('click', () => moveCat(+b.dataset.ci, +1)));
+
+  // arrastar para reordenar (segurar a alça ⠿ e mover) — SortableJS
+  if (window.Sortable) {
+    // itens: arrastáveis dentro da categoria e entre categorias
+    wrap.querySelectorAll('.ed-items').forEach(cont => {
+      editorSortables.push(Sortable.create(cont, {
+        group: 'ed-items', handle: '.ed-drag', animation: 150,
+        ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen',
+        onEnd: onEditorDragEnd
+      }));
+    });
+    // categorias inteiras
+    editorSortables.push(Sortable.create(wrap, {
+      group: 'ed-cats', draggable: '.ed-cat', handle: '.ed-cat-drag', animation: 150,
+      ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen',
+      onEnd: onEditorDragEnd
+    }));
+  }
+}
+
+/* Após um arraste, reconstrói o modelo (DATA) a partir da ordem atual do DOM. */
+function syncDataFromEditorDOM() {
+  const cats = [];
+  document.querySelectorAll('#items-editor .ed-cat').forEach(catEl => {
+    const jpEl = catEl.querySelector('.ed-cat-jp');
+    const ptEl = catEl.querySelector('.ed-cat-pt');
+    const items = [];
+    catEl.querySelectorAll('.ed-item').forEach(itEl => {
+      items.push({
+        jp: (itEl.querySelector('.ed-jp') || {}).value || '',
+        pt: (itEl.querySelector('.ed-pt') || {}).value || ''
+      });
+    });
+    cats.push({ nameJp: (jpEl || {}).value || '', namePt: (ptEl || {}).value || '', items });
+  });
+  DATA[itemsEditType].categories = cats;
+  saveItems();
+}
+
+function onEditorDragEnd() {
+  syncDataFromEditorDOM();
+  // re-render normaliza numeração/índices e reata as alças de arraste
+  setTimeout(renderItemsEditor, 0);
 }
 
 /* Move um item ↑/↓. No topo/fim de uma categoria, passa para a categoria vizinha. */
@@ -1381,6 +1446,9 @@ function closeSettings() {
     document.getElementById('topTitle').textContent = data.titleJp;
     document.getElementById('topSub').textContent = data.titlePt;
     refreshFormSelects();
+    // Reflete no formulário quaisquer itens editados nas Configurações,
+    // preservando avaliações/notas/fotos dos itens que não mudaram.
+    rebuildChecklistPreserving();
   } else {
     document.getElementById('screen-select').classList.remove('hidden');
     document.getElementById('topTitle').textContent = '巡回チェックシート';
@@ -1631,7 +1699,7 @@ function renderCategories() {
         }
         try {
           const dataUrl = await resizeImage(f, PHOTO_MAX_DIM, PHOTO_QUALITY);
-          photos[i].push(dataUrl);
+          photos[i].push({ src: dataUrl, caption: '' });
         } catch (err) {
           console.warn(err);
           toast('画像エラー / Erro na imagem');
@@ -1646,10 +1714,15 @@ function renderCategories() {
 function renderPhotos(i) {
   const row = document.getElementById('photos-row-'+i);
   if (!row) return;
-  row.innerHTML = photos[i].map((src, pi) => `
-    <div class="photo-thumb">
-      <img src="${src}" alt="">
-      <button class="x" data-idx="${i}" data-pi="${pi}">✕</button>
+  row.innerHTML = photos[i].map((p, pi) => `
+    <div class="photo-item">
+      <div class="photo-thumb">
+        <img src="${p.src}" alt="">
+        <button class="x" data-idx="${i}" data-pi="${pi}">✕</button>
+      </div>
+      <input class="photo-cap" data-idx="${i}" data-pi="${pi}"
+        value="${escapeHtml(p.caption || '')}"
+        placeholder="キャプション(任意) / Legenda (opcional)">
     </div>
   `).join('');
   row.querySelectorAll('.x').forEach(b => {
@@ -1658,8 +1731,47 @@ function renderPhotos(i) {
       renderPhotos(+b.dataset.idx);
     };
   });
+  row.querySelectorAll('.photo-cap').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const pi = +inp.dataset.pi;
+      if (photos[i][pi]) photos[i][pi].caption = inp.value;
+    });
+  });
   const cnt = document.getElementById('photo-count-'+i);
   if (cnt) cnt.textContent = photos[i].length > 0 ? `(${photos[i].length}/${MAX_PHOTOS_PER_ITEM})` : '';
+}
+
+/* Reconstrói o formulário a partir do DATA atual (após editar itens nas Configurações),
+   preservando avaliação/nota/fotos dos itens cujo texto japonês não mudou. */
+function rebuildChecklistPreserving() {
+  if (!currentType) return;
+  const data = DATA[currentType];
+
+  // snapshot do estado atual, indexado pelo texto JP do item
+  const prev = {};
+  itemFlat.forEach((f, idx) => {
+    if (!(f.jp in prev)) prev[f.jp] = { ev: evals[idx], note: notes[idx], ph: photos[idx] };
+  });
+
+  // reconstrói a lista achatada a partir dos itens (possivelmente editados)
+  itemFlat = [];
+  data.categories.forEach((cat, ci) => {
+    cat.items.forEach((it, ii) => itemFlat.push({ catIdx: ci, itemIdx: ii, ...it }));
+  });
+  evals  = itemFlat.map(f => (prev[f.jp] && prev[f.jp].ev)   || "");
+  notes  = itemFlat.map(f => (prev[f.jp] && prev[f.jp].note) || "");
+  photos = itemFlat.map(f => (prev[f.jp] && prev[f.jp].ph) ? prev[f.jp].ph.slice() : []);
+
+  renderCategories();
+
+  // restaura o estado visual (notas, botões ○/×, miniaturas de fotos)
+  itemFlat.forEach((f, i) => {
+    const ta = document.querySelector('.note[data-idx="' + i + '"]');
+    if (ta) ta.value = notes[i] || '';
+    refreshItem(i);
+    renderPhotos(i);
+  });
+  updateSummary();
 }
 
 function resizeImage(file, maxDim, quality) {
@@ -1893,8 +2005,12 @@ function buildPdfPhotoCards() {
         </div>
         <div style="font-size:14px; color:#1a1a1a; margin-bottom:8px;">${escapeHtml(f.pt)}</div>
         ${notes[f.idx] ? `<div style="font-size:11px; color:#333; padding:8px 10px; background:#fffbe6; border-left:3px solid #fbc02d; margin-bottom:14px;">📝 ${escapeHtml(notes[f.idx])}</div>` : ''}
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-          ${photos[f.idx].map(src => `<img src="${src}" style="width:${w}px; height:${h}px; object-fit:cover; border:1px solid #999; border-radius:4px;">`).join('')}
+        <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+          ${photos[f.idx].map(p => `
+            <div style="display:inline-block; text-align:center; vertical-align:top;">
+              <img src="${p.src}" style="width:${w}px; height:${h}px; object-fit:cover; border:1px solid #999; border-radius:4px;">
+              ${p.caption ? `<div style="width:${w}px; font-size:13px; color:#1a1a1a; margin-top:5px; word-break:break-word; line-height:1.35;">${escapeHtml(p.caption)}</div>` : ''}
+            </div>`).join('')}
         </div>
       </div>`;
   });
