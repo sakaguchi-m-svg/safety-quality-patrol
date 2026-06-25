@@ -266,6 +266,36 @@ html, body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* MODE CHOOSER (ゾーン x 個人) */
+.chooser {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1000;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.chooser.show { display: flex; }
+.chooser-box {
+  background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.3);
+}
+.chooser-box h3 { margin: 4px 0 16px; text-align: center; font-size: 16px; }
+.chooser-box h3 .pt { font-size: 12px; color: #888; font-weight: 400; }
+.chooser-opt {
+  width: 100%; display: flex; align-items: center; gap: 14px; text-align: left;
+  padding: 16px; margin-bottom: 12px; border: 2px solid #cfd8dc; border-radius: 12px;
+  background: #fff; cursor: pointer; font-family: inherit;
+}
+.chooser-opt .ic { font-size: 30px; }
+.chooser-opt .ct { display: flex; flex-direction: column; }
+.chooser-opt .ct b { font-size: 16px; }
+.chooser-opt .ct .pt { font-size: 12px; color: #888; margin-top: 2px; }
+.chooser-opt.zone { border-color: #90caf9; }
+.chooser-opt.zone:active { background: #e3f2fd; }
+.chooser-opt.indiv { border-color: #a5d6a7; }
+.chooser-opt.indiv:active { background: #e8f5e9; }
+.chooser-cancel {
+  width: 100%; padding: 12px; border: none; background: #f5f5f5; color: #777;
+  border-radius: 10px; font-size: 13px; cursor: pointer; font-family: inherit;
+}
+
 .hidden { display: none !important; }
 
 /* SETTINGS */
@@ -507,8 +537,12 @@ html, body {
     <div class="section">
       <h3>基本情報 <span style="font-size:11px;color:#888;font-weight:400;">Informações básicas</span></h3>
       <div class="field">
-        <label>ゾーン<span class="pt">Zona / Setor</span></label>
+        <label id="lbl-zone">ゾーン<span class="pt">Zona / Setor</span></label>
         <select id="f-zone"></select>
+      </div>
+      <div class="field" id="field-person" style="display:none;">
+        <label>個人<span class="pt">Pessoa / Funcionário</span></label>
+        <select id="f-person"></select>
       </div>
       <div class="row2">
         <div class="field">
@@ -617,6 +651,16 @@ html, body {
       </div>
     </div>
 
+    <div class="panel">
+      <h3>🧍 作業者 / Funcionários <span class="pt">(個人巡回 — <span id="cnt-workers">0</span>)</span></h3>
+      <div id="list-workers"></div>
+      <div class="add-row worker-add">
+        <input type="text" id="new-worker" placeholder="名前 / Nome">
+        <input type="text" id="new-worker-sector" placeholder="設備/ゾーン / Setor">
+        <button id="btnAddWorker">+ 追加</button>
+      </div>
+    </div>
+
     <!-- EDITOR DE ITENS DO CHECKLIST -->
     <div class="panel">
       <h3>📋 チェック項目 / Itens analisados</h3>
@@ -628,6 +672,13 @@ html, body {
       <div class="items-tabs">
         <button class="items-tab active" data-itype="safety">🦺 安全 / Segurança</button>
         <button class="items-tab" data-itype="quality">📦 品質 / Qualidade</button>
+      </div>
+      <div id="editSectorRow" style="display:none; margin-bottom:12px;">
+        <label style="font-size:12px; color:#2e7d32; font-weight:600;">🏷 設備・ゾーン別リスト / Lista por setor (品質)</label>
+        <select id="editSectorSelect" style="width:100%; padding:9px 10px; border:1px solid #a5d6a7; border-radius:8px; font-size:13px; margin-top:4px; background:#f1f8e9;"></select>
+        <div style="font-size:11px; color:#777; margin-top:4px;">
+          Cada setor pode ter sua própria lista. «標準リスト» vale para os setores sem lista própria. ✎ = já personalizado.
+        </div>
       </div>
       <div id="items-editor"></div>
       <div id="itemsSaveStatus" class="items-save">💾 変更は自動保存されます / As alterações são salvas automaticamente</div>
@@ -652,6 +703,31 @@ html, body {
 <!-- TOAST + LOADING -->
 <div class="toast" id="toast"></div>
 <div class="loading" id="loading"><div class="box"><div class="spinner"></div><div id="loadingMsg">PDF生成中...</div></div></div>
+
+<!-- ESCOLHA DO SETOR (品質巡回) -->
+<div class="chooser" id="sectorChooser">
+  <div class="chooser-box">
+    <h3>設備・ゾーンを選択<br><span class="pt">Selecione o setor da patrulha de qualidade</span></h3>
+    <div id="sectorList" style="max-height:50vh; overflow-y:auto;"></div>
+    <button class="chooser-cancel" id="sectorCancel">✕ キャンセル / Cancelar</button>
+  </div>
+</div>
+
+<!-- ESCOLHA DO MODO DE 品質巡回 (ゾーン x 個人) -->
+<div class="chooser" id="modeChooser">
+  <div class="chooser-box">
+    <h3>品質巡回の種類<br><span class="pt">Tipo de patrulha de qualidade</span></h3>
+    <button class="chooser-opt zone" data-mode="zone">
+      <span class="ic">🗺</span>
+      <span class="ct"><b>ゾーン巡回</b><span class="pt">Por zona / setor</span></span>
+    </button>
+    <button class="chooser-opt indiv" data-mode="individual">
+      <span class="ic">🧍</span>
+      <span class="ct"><b>個人巡回</b><span class="pt">Individual — avalia uma pessoa</span></span>
+    </button>
+    <button class="chooser-cancel" id="chooserCancel">✕ キャンセル / Cancelar</button>
+  </div>
+</div>
 
 <script>
 /* ============================================================
@@ -801,9 +877,45 @@ function flashItemsSaved(ok) {
 let DATA = loadItems();
 
 /* ============================================================
+   QUALIDADE POR SETOR — cada setor pode ter sua própria lista de itens.
+   Estrutura: { 'A-1': { categories:[...] }, ... }
+   Setor sem entrada usa a lista padrão (DATA.quality.categories).
+   ============================================================ */
+const QUALITY_BY_SECTOR_KEY = 'patrulha:qualityBySector';
+function loadQualityBySector() {
+  try {
+    const raw = localStorage.getItem(QUALITY_BY_SECTOR_KEY);
+    if (raw) { const o = JSON.parse(raw); if (o && typeof o === 'object') return o; }
+  } catch (e) {}
+  return {};
+}
+function saveQualityBySector() {
+  try { localStorage.setItem(QUALITY_BY_SECTOR_KEY, JSON.stringify(qualityBySector)); } catch (e) {}
+}
+let qualityBySector = loadQualityBySector();
+
+/* Itens de qualidade do setor (ou a lista padrão se o setor não tem própria). */
+function getQualityCategories(sector) {
+  const s = qualityBySector[sector];
+  if (s && Array.isArray(s.categories)) return s.categories;
+  return DATA.quality.categories;
+}
+/* Todos os setores possíveis = zonas ∪ setores de funcionários ∪ setores com lista própria. */
+function allSectors() {
+  const set = new Set();
+  loadList('zone').forEach(z => z && set.add(z));
+  workerSectors().forEach(s => s && set.add(s));
+  Object.keys(qualityBySector).forEach(s => s && set.add(s));
+  return [...set].sort();
+}
+
+/* ============================================================
    STATE
    ============================================================ */
 let currentType = null;        // "safety" | "quality"
+let currentMode = 'zone';      // "zone" | "individual" (個人巡回) — só vale p/ quality
+let currentSector = '';        // setor escolhido (品質: define a lista de itens)
+let currentCategories = [];    // lista de itens em uso na patrulha atual
 let evals = [];                // ["", "ok", "ng", ...] one per item
 let notes = [];                // notes per item
 let photos = [];               // [[dataUrl,...], ...] per item
@@ -820,7 +932,8 @@ const PHOTO_QUALITY = 0.7;     // JPEG quality
 const STORE_KEYS = {
   zone: 'patrulha:zones',
   leader: 'patrulha:leaders',
-  inspector: 'patrulha:inspectors'
+  inspector: 'patrulha:inspectors',
+  worker: 'patrulha:workers'      // 作業者 / Funcionários (avaliados no 個人巡回)
 };
 const SYNC_URL_KEY = 'patrulha:syncUrl';
 const SYNC_AT_KEY = 'patrulha:syncedAt';
@@ -836,7 +949,8 @@ const DEFAULT_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxwIZcE465yhGx
 const DEFAULTS = {
   zone: ['A-1','A-2','B-1','B-2','C-1'],
   leader: [],
-  inspector: []
+  inspector: [],
+  worker: []
 };
 
 function getSyncUrl() {
@@ -864,10 +978,11 @@ async function syncFromSheet(silent) {
     if (Array.isArray(data.zones))      saveList('zone', data.zones);
     if (Array.isArray(data.leaders))    saveList('leader', data.leaders);
     if (Array.isArray(data.inspectors)) saveList('inspector', data.inspectors);
+    if (Array.isArray(data.workers))    saveWorkers(data.workers);
     localStorage.setItem(SYNC_AT_KEY, new Date().toISOString());
     if (!silent) {
       hideLoading();
-      toast(`✅ 同期完了 (${(data.zones||[]).length} ゾーン, ${(data.leaders||[]).length} 職長, ${(data.inspectors||[]).length} 巡回者)`);
+      toast(`✅ 同期完了 (${(data.zones||[]).length} ゾーン, ${(data.leaders||[]).length} 職長, ${(data.inspectors||[]).length} 巡回者, ${(data.workers||[]).length} 作業者)`);
     }
     return data;
   } catch (e) {
@@ -918,9 +1033,14 @@ async function sendHistoryToSheet(pdfBlob) {
     .map((f, idx) => evals[idx] === 'ng' ? { no: idx+1, jp: f.jp, note: notes[idx] || '' } : null)
     .filter(Boolean);
 
+  const setorVal = document.getElementById('f-zone').value || '';
+  const personVal = (document.getElementById('f-person') || {}).value || '';
   const payload = {
-    type: data.titleJp,
-    zone: document.getElementById('f-zone').value || '',
+    type: currentMode === 'individual' ? data.titleJp + '（個人）' : data.titleJp,
+    // no 個人巡回, a coluna Zona recebe a pessoa (+ setor) p/ o dashboard ranquear por pessoa
+    zone: currentMode === 'individual'
+      ? personVal + (setorVal ? `（${setorVal}）` : '')
+      : setorVal,
     dateStart: document.getElementById('f-date-start').value || '',
     dateEnd: document.getElementById('f-date-end').value || '',
     inspector: document.getElementById('f-inspector').value || '',
@@ -1029,6 +1149,48 @@ function removeFromList(kind, value) {
   saveList(kind, list);
 }
 
+/* ── 作業者 / Funcionários: lista de objetos {name, sector} (個人巡回) ── */
+function normalizeWorker(w) {
+  if (typeof w === 'string') return { name: w.trim(), sector: '' };   // compat. formato antigo
+  return { name: String((w && w.name) || '').trim(), sector: String((w && w.sector) || '').trim() };
+}
+function loadWorkers() {
+  try {
+    const raw = localStorage.getItem(STORE_KEYS.worker);
+    if (raw) {
+      const a = JSON.parse(raw);
+      if (Array.isArray(a)) return a.map(normalizeWorker).filter(w => w.name);
+    }
+  } catch (e) {}
+  return [];
+}
+function saveWorkers(arr) {
+  try {
+    const clean = (Array.isArray(arr) ? arr : []).map(normalizeWorker).filter(w => w.name);
+    localStorage.setItem(STORE_KEYS.worker, JSON.stringify(clean));
+  } catch (e) {}
+}
+function addWorker(name, sector) {
+  name = (name || '').trim(); sector = (sector || '').trim();
+  if (!name) return false;
+  const list = loadWorkers();
+  if (list.some(w => w.name === name && w.sector === sector)) { toast('既に登録済み / Já existe'); return false; }
+  list.push({ name, sector });
+  saveWorkers(list);
+  return true;
+}
+function removeWorker(name, sector) {
+  saveWorkers(loadWorkers().filter(w => !(w.name === name && w.sector === sector)));
+}
+/* setores distintos que têm pelo menos uma pessoa */
+function workerSectors() {
+  return [...new Set(loadWorkers().map(w => w.sector).filter(Boolean))];
+}
+/* nomes das pessoas de um setor */
+function workersOfSector(sector) {
+  return loadWorkers().filter(w => w.sector === sector).map(w => w.name);
+}
+
 /* fill a <select> with options from a list */
 function fillSelect(selectEl, list, currentValue, placeholder) {
   selectEl.innerHTML = '';
@@ -1050,12 +1212,38 @@ function fillSelect(selectEl, list, currentValue, placeholder) {
 }
 
 function refreshFormSelects() {
-  fillSelect(document.getElementById('f-zone'), loadList('zone'),
-    document.getElementById('f-zone').value, '— 選択 / Selecione —');
+  // No 品質巡回 o campo de zona = SETOR (define a lista de itens). No 安全, zonas normais.
+  const isQuality = currentType === 'quality';
+  fillSelect(document.getElementById('f-zone'),
+    isQuality ? allSectors() : loadList('zone'),
+    document.getElementById('f-zone').value,
+    isQuality ? '— 設備/ゾーンを選択 / Selecione o setor —' : '— 選択 / Selecione —');
   fillSelect(document.getElementById('f-inspector'), loadList('inspector'),
     document.getElementById('f-inspector').value, '— 選択 / Selecione —');
   fillSelect(document.getElementById('f-leader'), loadList('leader'),
     document.getElementById('f-leader').value, '— 選択 / Selecione —');
+  refreshPersonSelect();
+}
+
+/* Preenche o seletor de pessoa com os funcionários do setor escolhido. */
+function refreshPersonSelect() {
+  const sel = document.getElementById('f-person');
+  if (!sel) return;
+  const sector = document.getElementById('f-zone').value;
+  fillSelect(sel, workersOfSector(sector), sel.value, '— 個人を選択 / Selecione a pessoa —');
+}
+
+/* Ajusta título e mostra/esconde o campo de pessoa conforme o modo. */
+function applyModeUI() {
+  const fp = document.getElementById('field-person');
+  const sub = document.getElementById('topSub');
+  if (currentMode === 'individual') {
+    if (fp) fp.style.display = '';
+    if (sub && currentType) sub.textContent = DATA[currentType].titlePt + ' — 個人巡回';
+  } else {
+    if (fp) fp.style.display = 'none';
+    if (sub && currentType) sub.textContent = DATA[currentType].titlePt;
+  }
 }
 
 /* ============================================================
@@ -1137,16 +1325,83 @@ function renderSettings() {
     };
   });
 
+  // 2b) funcionários (作業者) — lista com setor
+  renderWorkers();
+
   // 3) editor de itens do checklist
   renderItemsEditor();
+}
+
+/* Lista de funcionários (nome + setor) nas Configurações. */
+function renderWorkers() {
+  const target = document.getElementById('list-workers');
+  if (!target) return;
+  const synced = isSynced();
+  const list = loadWorkers();
+  document.getElementById('cnt-workers').textContent = list.length;
+
+  let html = '';
+  if (list.length === 0) {
+    html = `<div class="list-empty">まだ登録されていません<br>Nenhum funcionário${synced ? '<br><br>📋 シート編集 / Edite a planilha (col. A=nome, B=setor)' : ''}</div>`;
+  } else {
+    html = list.map(w => `
+      <div class="list-item">
+        <span class="name">${escapeHtml(w.name)}${w.sector ? ` <span class="synced-badge" style="background:#eceff1;color:#546e7a;">🏷 ${escapeHtml(w.sector)}</span>` : ''}${synced ? '<span class="synced-badge">📡 シート</span>' : ''}</span>
+        ${synced ? '' : `<button class="del-worker" data-name="${escapeHtml(w.name)}" data-sector="${escapeHtml(w.sector)}" title="削除">✕</button>`}
+      </div>`).join('');
+  }
+  if (synced) {
+    html += `<div class="list-readonly-hint">📌 読み取り専用 / Somente leitura — edite a planilha (coluna A=nome, B=setor)</div>`;
+  }
+  target.innerHTML = html;
+
+  const addRow = target.parentElement.querySelector('.add-row');
+  if (addRow) addRow.style.display = synced ? 'none' : 'flex';
+
+  target.querySelectorAll('.del-worker').forEach(b => {
+    b.onclick = () => {
+      if (confirm(`「${b.dataset.name}」を削除しますか？\nRemover "${b.dataset.name}"?`)) {
+        removeWorker(b.dataset.name, b.dataset.sector);
+        renderWorkers();
+        toast('削除しました / Removido');
+      }
+    };
+  });
 }
 
 /* ============================================================
    EDITOR DE ITENS + TRADUÇÃO AUTOMÁTICA
    ============================================================ */
 let itemsEditType = 'safety';      // "safety" | "quality"
+let itemsEditSector = '';          // '' = lista padrão; nome do setor = lista própria (só 品質)
 const translateTimers = {};
 let editorSortables = [];           // instâncias SortableJS ativas no editor
+
+/* Categorias que o editor está editando (lista padrão ou a de um setor). */
+function editorCategories() {
+  if (itemsEditType === 'quality' && itemsEditSector) {
+    if (!qualityBySector[itemsEditSector] || !Array.isArray(qualityBySector[itemsEditSector].categories)) {
+      // primeira edição do setor: começa como cópia da lista padrão
+      qualityBySector[itemsEditSector] = { categories: JSON.parse(JSON.stringify(DATA.quality.categories)) };
+      saveQualityBySector();
+    }
+    return qualityBySector[itemsEditSector].categories;
+  }
+  return DATA[itemsEditType].categories;
+}
+function setEditorCategories(cats) {
+  if (itemsEditType === 'quality' && itemsEditSector) {
+    qualityBySector[itemsEditSector] = { categories: cats };
+    saveQualityBySector(); flashItemsSaved(true);
+  } else {
+    DATA[itemsEditType].categories = cats;
+    saveItems();
+  }
+}
+function editorSave() {
+  if (itemsEditType === 'quality' && itemsEditSector) { saveQualityBySector(); flashItemsSaved(true); }
+  else saveItems();
+}
 
 /* Chama o tradutor do Apps Script (LanguageApp). from/to: 'ja' | 'pt' | '' (auto). */
 async function translateText(text, from, to) {
@@ -1175,7 +1430,12 @@ function renderItemsEditor() {
   document.querySelectorAll('.items-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.itype === itemsEditType));
 
-  const cats = DATA[itemsEditType].categories;
+  // seletor de setor (só no 品質)
+  const secRow = document.getElementById('editSectorRow');
+  if (secRow) secRow.style.display = (itemsEditType === 'quality') ? 'block' : 'none';
+  if (itemsEditType === 'quality') refreshEditSectorSelect();
+
+  const cats = editorCategories();
   let html = '';
   cats.forEach((cat, ci) => {
     html += `
@@ -1236,7 +1496,7 @@ function fieldLang(input) {
 
 /* Grava o valor de um input de volta em DATA e persiste. */
 function applyFieldToData(input) {
-  const cat = DATA[itemsEditType].categories[+input.dataset.ci];
+  const cat = editorCategories()[+input.dataset.ci];
   if (!cat) return;
   if (input.dataset.fld) {
     cat[input.dataset.fld] = input.value;
@@ -1244,7 +1504,7 @@ function applyFieldToData(input) {
     const it = cat.items[+input.dataset.ii];
     if (it) it[input.dataset.lang] = input.value;
   }
-  saveItems();
+  editorSave();
 }
 
 function scheduleTranslate(input) {
@@ -1284,20 +1544,20 @@ function wireItemsEditor() {
     });
   });
   wrap.querySelectorAll('.ed-del-item').forEach(b => b.addEventListener('click', () => {
-    DATA[itemsEditType].categories[+b.dataset.ci].items.splice(+b.dataset.ii, 1);
-    saveItems(); renderItemsEditor();
+    editorCategories()[+b.dataset.ci].items.splice(+b.dataset.ii, 1);
+    editorSave(); renderItemsEditor();
   }));
   wrap.querySelectorAll('.ed-add-item').forEach(b => b.addEventListener('click', () => {
     const ci = +b.dataset.ci;
-    DATA[itemsEditType].categories[ci].items.push({ jp:'', pt:'' });
-    saveItems(); renderItemsEditor();
+    editorCategories()[ci].items.push({ jp:'', pt:'' });
+    editorSave(); renderItemsEditor();
     const jps = document.querySelectorAll(`.ed-cat:nth-child(${ci+1}) .ed-jp`);
     if (jps.length) jps[jps.length-1].focus();
   }));
   wrap.querySelectorAll('.ed-del-cat').forEach(b => b.addEventListener('click', () => {
     if (!confirm('このカテゴリと項目を全て削除しますか？\nExcluir esta categoria e todos os itens?')) return;
-    DATA[itemsEditType].categories.splice(+b.dataset.ci, 1);
-    saveItems(); renderItemsEditor();
+    editorCategories().splice(+b.dataset.ci, 1);
+    editorSave(); renderItemsEditor();
   }));
   wrap.querySelectorAll('.ed-up').forEach(b   => b.addEventListener('click', () => moveItem(+b.dataset.ci, +b.dataset.ii, -1)));
   wrap.querySelectorAll('.ed-down').forEach(b => b.addEventListener('click', () => moveItem(+b.dataset.ci, +b.dataset.ii, +1)));
@@ -1338,8 +1598,7 @@ function syncDataFromEditorDOM() {
     });
     cats.push({ nameJp: (jpEl || {}).value || '', namePt: (ptEl || {}).value || '', items });
   });
-  DATA[itemsEditType].categories = cats;
-  saveItems();
+  setEditorCategories(cats);
 }
 
 function onEditorDragEnd() {
@@ -1350,7 +1609,7 @@ function onEditorDragEnd() {
 
 /* Move um item ↑/↓. No topo/fim de uma categoria, passa para a categoria vizinha. */
 function moveItem(ci, ii, dir) {
-  const cats = DATA[itemsEditType].categories;
+  const cats = editorCategories();
   const cat = cats[ci];
   if (!cat) return;
   const ni = ii + dir;
@@ -1365,31 +1624,55 @@ function moveItem(ci, ii, dir) {
   } else {
     return;   // já está no extremo absoluto
   }
-  saveItems(); renderItemsEditor();
+  editorSave(); renderItemsEditor();
 }
 
 /* Move uma categoria inteira ↑/↓. */
 function moveCat(ci, dir) {
-  const cats = DATA[itemsEditType].categories;
+  const cats = editorCategories();
   const ni = ci + dir;
   if (ni < 0 || ni >= cats.length) return;
   const tmp = cats[ci]; cats[ci] = cats[ni]; cats[ni] = tmp;
-  saveItems(); renderItemsEditor();
+  editorSave(); renderItemsEditor();
+}
+
+/* Lista suspensa de setor no editor (品質). */
+function refreshEditSectorSelect() {
+  const sel = document.getElementById('editSectorSelect');
+  if (!sel) return;
+  const sectors = allSectors();
+  sel.innerHTML = `<option value="">★ 標準リスト / Lista padrão (todos os setores)</option>` +
+    sectors.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}${qualityBySector[s] ? ' ✎' : ''}</option>`).join('');
+  sel.value = itemsEditSector;
 }
 
 /* botões fixos do editor (existem sempre no HTML) */
 document.querySelectorAll('.items-tab').forEach(t => t.addEventListener('click', () => {
   itemsEditType = t.dataset.itype;
+  if (itemsEditType !== 'quality') itemsEditSector = '';   // setor só faz sentido no 品質
   renderItemsEditor();
 }));
+document.getElementById('editSectorSelect').addEventListener('change', e => {
+  itemsEditSector = e.target.value;
+  renderItemsEditor();
+});
 document.getElementById('btnAddCat').addEventListener('click', () => {
-  DATA[itemsEditType].categories.push({ nameJp:'', namePt:'', items:[{ jp:'', pt:'' }] });
-  saveItems(); renderItemsEditor();
+  editorCategories().push({ nameJp:'', namePt:'', items:[{ jp:'', pt:'' }] });
+  editorSave(); renderItemsEditor();
 });
 document.getElementById('btnResetItems').addEventListener('click', () => {
-  if (!confirm('この巡回の項目を初期値に戻しますか？編集は消えます。\nRestaurar os itens padrão desta patrulha? Suas edições serão perdidas.')) return;
-  DATA[itemsEditType].categories = JSON.parse(JSON.stringify(DEFAULT_DATA[itemsEditType].categories));
-  saveItems(); renderItemsEditor();
+  const alvo = (itemsEditType === 'quality' && itemsEditSector)
+    ? `setor 「${itemsEditSector}」` : 'lista padrão';
+  if (!confirm(`項目を初期値に戻しますか？編集は消えます。\nRestaurar os itens padrão (${alvo})? Suas edições serão perdidas.`)) return;
+  if (itemsEditType === 'quality' && itemsEditSector) {
+    // setor volta a ser uma cópia da lista padrão de qualidade
+    qualityBySector[itemsEditSector] = { categories: JSON.parse(JSON.stringify(DATA.quality.categories)) };
+    saveQualityBySector(); flashItemsSaved(true);
+  } else {
+    DATA[itemsEditType].categories = JSON.parse(JSON.stringify(DEFAULT_DATA[itemsEditType].categories));
+    saveItems();
+  }
+  renderItemsEditor();
   toast('初期値に戻しました / Restaurado');
 });
 
@@ -1446,6 +1729,7 @@ function closeSettings() {
     document.getElementById('topTitle').textContent = data.titleJp;
     document.getElementById('topSub').textContent = data.titlePt;
     refreshFormSelects();
+    applyModeUI();   // mantém os rótulos do modo (ゾーン巡回 / 個人巡回)
     // Reflete no formulário quaisquer itens editados nas Configurações,
     // preservando avaliações/notas/fotos dos itens que não mudaram.
     rebuildChecklistPreserving();
@@ -1524,11 +1808,98 @@ document.querySelectorAll('[data-add]').forEach(b => {
   });
 });
 
+/* add funcionário (nome + setor) */
+document.getElementById('btnAddWorker').addEventListener('click', () => {
+  const n = document.getElementById('new-worker');
+  const s = document.getElementById('new-worker-sector');
+  if (addWorker(n.value, s.value)) {
+    n.value = ''; s.value = '';
+    renderWorkers();
+    n.focus();
+    toast('追加しました / Adicionado');
+  }
+});
+['new-worker','new-worker-sector'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnAddWorker').click(); }
+  });
+});
+/* ao trocar o setor: no 品質 recarrega os itens do setor; no 個人 atualiza as pessoas */
+document.getElementById('f-zone').addEventListener('change', () => {
+  if (currentType === 'quality') {
+    currentSector = document.getElementById('f-zone').value || '';
+    reloadCurrentItems();
+  }
+  if (currentMode === 'individual') refreshPersonSelect();
+});
+
+/* Recarrega itemFlat a partir da lista do setor atual (reseta avaliações). */
+function reloadCurrentItems() {
+  currentCategories = (currentType === 'quality')
+    ? getQualityCategories(currentSector)
+    : DATA.safety.categories;
+  itemFlat = [];
+  currentCategories.forEach((cat, ci) => cat.items.forEach((it, ii) =>
+    itemFlat.push({ catIdx: ci, itemIdx: ii, ...it })));
+  evals = itemFlat.map(() => "");
+  notes = itemFlat.map(() => "");
+  photos = itemFlat.map(() => []);
+  renderCategories();
+  updateSummary();
+}
+
 /* ============================================================
    INIT
    ============================================================ */
 document.querySelectorAll('.choice').forEach(b => {
-  b.addEventListener('click', () => startChecklist(b.dataset.type));
+  b.addEventListener('click', () => {
+    if (b.dataset.type === 'quality') {
+      // 品質巡回: 1º escolhe o SETOR, depois ゾーン巡回 / 個人巡回
+      openSectorChooser();
+    } else {
+      startChecklist(b.dataset.type, 'zone');
+    }
+  });
+});
+
+/* ── Seletor de SETOR (品質巡回) ── */
+let pendingSector = '';
+function openSectorChooser() {
+  const sectors = allSectors();
+  const box = document.getElementById('sectorList');
+  if (sectors.length === 0) {
+    box.innerHTML = `<div style="padding:16px;text-align:center;color:#888;font-size:13px;">
+      設備・ゾーンが未登録です。<br>Nenhum setor cadastrado.<br>
+      ⚙ で Zonas や 作業者(setor) を追加してください.</div>`;
+  } else {
+    box.innerHTML = sectors.map(s => {
+      const own = !!qualityBySector[s];
+      return `<button class="chooser-opt sector" data-sector="${escapeHtml(s)}">
+        <span class="ic">🏷</span>
+        <span class="ct"><b>${escapeHtml(s)}</b><span class="pt">${own ? '専用リスト / lista própria' : '標準リスト / lista padrão'}</span></span>
+      </button>`;
+    }).join('');
+    box.querySelectorAll('.sector').forEach(btn => btn.addEventListener('click', () => {
+      pendingSector = btn.dataset.sector;
+      document.getElementById('sectorChooser').classList.remove('show');
+      document.getElementById('modeChooser').classList.add('show');
+    }));
+  }
+  document.getElementById('sectorChooser').classList.add('show');
+}
+document.getElementById('sectorCancel').addEventListener('click', () => {
+  document.getElementById('sectorChooser').classList.remove('show');
+});
+
+/* botões do modal de modo (ゾーン / 個人) — usam o setor já escolhido */
+document.querySelectorAll('#modeChooser .chooser-opt').forEach(b => {
+  b.addEventListener('click', () => {
+    document.getElementById('modeChooser').classList.remove('show');
+    startChecklist('quality', b.dataset.mode, pendingSector);
+  });
+});
+document.getElementById('chooserCancel').addEventListener('click', () => {
+  document.getElementById('modeChooser').classList.remove('show');
 });
 document.getElementById('btnSwitch').addEventListener('click', () => {
   if (confirm('別のチェックシートに切替えますか？\n入力中のデータは失われます。\n\nTrocar de checklist? Os dados preenchidos serão perdidos.')) {
@@ -1549,13 +1920,20 @@ function todayISO(d=new Date()){
 /* ============================================================
    FLOW
    ============================================================ */
-function startChecklist(type) {
+function startChecklist(type, mode, sector) {
   currentType = type;
+  currentMode = (type === 'quality' && mode === 'individual') ? 'individual' : 'zone';
+  currentSector = (type === 'quality') ? (sector || '') : '';
   const data = DATA[type];
+
+  // lista de itens em uso: no 品質 = lista do setor; no 安全 = lista padrão
+  currentCategories = (type === 'quality')
+    ? getQualityCategories(currentSector)
+    : DATA.safety.categories;
 
   // populate flat list
   itemFlat = [];
-  data.categories.forEach((cat, ci) => {
+  currentCategories.forEach((cat, ci) => {
     cat.items.forEach((it, ii) => {
       itemFlat.push({ catIdx: ci, itemIdx: ii, ...it });
     });
@@ -1571,6 +1949,12 @@ function startChecklist(type) {
 
   // populate dropdowns from settings
   refreshFormSelects();
+  // pré-seleciona o setor escolhido no campo de zona
+  if (type === 'quality' && currentSector) {
+    document.getElementById('f-zone').value = currentSector;
+    refreshPersonSelect();
+  }
+  applyModeUI();   // rótulos conforme ゾーン巡回 / 個人巡回
 
   // render categories
   renderCategories();
@@ -1594,6 +1978,8 @@ function startChecklist(type) {
 
 function backToSelector() {
   currentType = null;
+  currentMode = 'zone';
+  currentSector = '';
   document.getElementById('screen-select').classList.remove('hidden');
   document.getElementById('screen-form').classList.add('hidden');
   document.getElementById('actionBar').classList.add('hidden');
@@ -1601,14 +1987,14 @@ function backToSelector() {
   document.getElementById('topTitle').textContent = '巡回チェックシート';
   document.getElementById('topSub').textContent = 'Patrulha Semanal';
   // reset selects
-  ['f-zone','f-inspector','f-leader'].forEach(id => { document.getElementById(id).value = ''; });
+  ['f-zone','f-person','f-inspector','f-leader'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 }
 
 function resetForm() {
   evals = itemFlat.map(() => "");
   notes = itemFlat.map(() => "");
   photos = itemFlat.map(() => []);
-  ['f-zone','f-inspector','f-leader'].forEach(id => { document.getElementById(id).value = ''; });
+  ['f-zone','f-person','f-inspector','f-leader'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   refreshFormSelects();
   renderCategories();
   updateSummary();
@@ -1620,12 +2006,11 @@ function resetForm() {
    RENDER
    ============================================================ */
 function renderCategories() {
-  const data = DATA[currentType];
   const wrap = document.getElementById('categories');
   wrap.innerHTML = '';
 
   let globalNo = 0;
-  data.categories.forEach((cat, ci) => {
+  currentCategories.forEach((cat, ci) => {
     const block = document.createElement('div');
     block.className = 'cat-block';
     block.innerHTML = `
@@ -1745,7 +2130,10 @@ function renderPhotos(i) {
    preservando avaliação/nota/fotos dos itens cujo texto japonês não mudou. */
 function rebuildChecklistPreserving() {
   if (!currentType) return;
-  const data = DATA[currentType];
+  // re-busca a lista atual (pode ter sido editada nas Configurações)
+  currentCategories = (currentType === 'quality')
+    ? getQualityCategories(currentSector)
+    : DATA.safety.categories;
 
   // snapshot do estado atual, indexado pelo texto JP do item
   const prev = {};
@@ -1755,7 +2143,7 @@ function rebuildChecklistPreserving() {
 
   // reconstrói a lista achatada a partir dos itens (possivelmente editados)
   itemFlat = [];
-  data.categories.forEach((cat, ci) => {
+  currentCategories.forEach((cat, ci) => {
     cat.items.forEach((it, ii) => itemFlat.push({ catIdx: ci, itemIdx: ii, ...it }));
   });
   evals  = itemFlat.map(f => (prev[f.jp] && prev[f.jp].ev)   || "");
@@ -1815,7 +2203,6 @@ function escapeHtml(s) {
    SUMMARY
    ============================================================ */
 function updateSummary() {
-  const data = DATA[currentType];
   const total = itemFlat.length;
   const ok = evals.filter(v => v === 'ok').length;
   const ng = evals.filter(v => v === 'ng').length;
@@ -1837,7 +2224,7 @@ function updateSummary() {
   // per-category
   const csum = document.getElementById('catSummary');
   csum.innerHTML = '';
-  data.categories.forEach((cat, ci) => {
+  currentCategories.forEach((cat, ci) => {
     const items = itemFlat.map((f, idx) => f.catIdx === ci ? idx : -1).filter(i => i >= 0);
     const cOk = items.filter(i => evals[i] === 'ok').length;
     const cNg = items.filter(i => evals[i] === 'ng').length;
@@ -1888,6 +2275,7 @@ function updateSummary() {
 function buildPdfHtml() {
   const data = DATA[currentType];
   const zone = document.getElementById('f-zone').value || '';
+  const person = (document.getElementById('f-person') || {}).value || '';
   const ds = document.getElementById('f-date-start').value || '';
   const de = document.getElementById('f-date-end').value || '';
   const inspector = document.getElementById('f-inspector').value || '';
@@ -1902,7 +2290,7 @@ function buildPdfHtml() {
 
   let rowsHtml = '';
   let globalNo = 0;
-  data.categories.forEach((cat, ci) => {
+  currentCategories.forEach((cat, ci) => {
     const items = itemFlat.map((f, idx) => f.catIdx === ci ? idx : -1).filter(i => i >= 0);
     items.forEach((flatIdx, ii) => {
       globalNo++;
@@ -1943,15 +2331,22 @@ function buildPdfHtml() {
   const evaluated = ok + ng;
   const overall = evaluated > 0 ? Math.round((ok/evaluated)*100) : 0;
 
+  const isIndiv = currentMode === 'individual';
+  const pdfTitle = isIndiv ? data.titleJp + '（個人巡回）' : data.titleJp;
+  // no 個人巡回: linha "個人" com a pessoa e o setor entre parênteses
+  const subjectLabel = isIndiv ? '個人' : 'ゾーン';
+  const subjectValue = isIndiv
+    ? escapeHtml(person) + (zone ? `（${escapeHtml(zone)}）` : '')
+    : escapeHtml(zone);
   return `
     <div class="pdf-header">
-      <div class="pdf-title">${data.titleJp}</div>
+      <div class="pdf-title">${pdfTitle}</div>
       <div class="pdf-leader">
         <div class="lh">職長</div>
         <div class="lv">${escapeHtml(leader)}</div>
       </div>
       <div class="pdf-meta">
-        <div>ゾーン</div><div>${escapeHtml(zone)}</div>
+        <div>${subjectLabel}</div><div>${subjectValue}</div>
         <div>実施日</div><div>${fmtDate(ds)} ～ ${fmtDate(de)}</div>
         <div>巡回者</div><div>${escapeHtml(inspector)}</div>
       </div>
@@ -2091,12 +2486,19 @@ function buildFilename(ext='pdf') {
   const fmtShort = iso => iso ? iso.slice(2,4) + iso.slice(5,7) + iso.slice(8,10) : '';
   const ds = fmtShort(document.getElementById('f-date-start').value || todayISO());
   const de = fmtShort(document.getElementById('f-date-end').value || document.getElementById('f-date-start').value || todayISO());
-  const zone = sanitize(document.getElementById('f-zone').value) || 'zone';
-  const inspector = sanitize(document.getElementById('f-inspector').value);
-  const t = currentType === 'safety' ? '安全巡回' : '品質巡回';
+  const isIndiv = currentMode === 'individual';
+  const t = currentType === 'safety' ? '安全巡回'
+          : isIndiv ? '個人品質巡回' : '品質巡回';
+  // 【colchete】 e （parênteses）:
+  //  - normal/安全:   【zona/setor】〜巡回（巡回者/inspetor）
+  //  - 個人巡回:      【setor】個人品質巡回（funcionário selecionado）
+  const bracket = sanitize(document.getElementById('f-zone').value) || (isIndiv ? 'setor' : 'zone');
+  const paren = sanitize(isIndiv
+    ? document.getElementById('f-person').value
+    : document.getElementById('f-inspector').value);
   // Formato: 260508~260512 【A-1】安全巡回（山田太郎）.pdf
-  const insp = inspector ? `（${inspector}）` : '';
-  return `${ds}~${de} 【${zone}】${t}${insp}.${ext}`;
+  const p = paren ? `（${paren}）` : '';
+  return `${ds}~${de} 【${bracket}】${t}${p}.${ext}`;
 }
 
 async function generatePdf() {
@@ -2216,8 +2618,13 @@ async function shareWhatsApp() {
    ============================================================ */
 function validateBeforeExport() {
   if (!document.getElementById('f-zone').value.trim()) {
-    toast('⚠ ゾーンを選択 / Selecione a Zona');
+    toast(currentMode === 'individual' ? '⚠ 設備/ゾーンを選択 / Selecione o setor' : '⚠ ゾーンを選択 / Selecione a Zona');
     document.getElementById('f-zone').focus();
+    return false;
+  }
+  if (currentMode === 'individual' && !document.getElementById('f-person').value.trim()) {
+    toast('⚠ 個人を選択 / Selecione a Pessoa');
+    document.getElementById('f-person').focus();
     return false;
   }
   if (!document.getElementById('f-inspector').value.trim()) {

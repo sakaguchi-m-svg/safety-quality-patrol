@@ -102,6 +102,14 @@ html, body {
 .chart-card.full { grid-column: 1 / -1; }
 .chart-canvas-wrap { position: relative; height: 280px; }
 
+/* SECTION HEADING (個人巡回) */
+.section-head {
+  margin: 18px 16px 0; padding: 10px 14px; border-radius: 10px;
+  background: linear-gradient(135deg,#2e7d32,#43a047); color: #fff;
+  font-size: 14px; font-weight: 600;
+}
+.section-head span { font-weight: 400; font-size: 11px; opacity: .9; margin-left: 6px; }
+
 /* TABLE */
 .recent {
   background: #fff; margin: 12px 16px; border-radius: 10px;
@@ -204,7 +212,8 @@ html, body {
       <select id="fType">
         <option value="all">すべて / Todos</option>
         <option value="安全巡回チェックシート">🦺 安全 / Segurança</option>
-        <option value="品質巡回チェックシート">📦 品質 / Qualidade</option>
+        <option value="品質巡回チェックシート">📦 品質 / Qualidade (zona)</option>
+        <option value="品質巡回チェックシート（個人）">🧍 個人巡回 / Individual</option>
       </select>
     </div>
     <div class="filter">
@@ -232,6 +241,20 @@ html, body {
     <div class="chart-card">
       <h3>👤 巡回者別 / Por Inspetor</h3>
       <div class="chart-canvas-wrap"><canvas id="chartInspector"></canvas></div>
+    </div>
+  </div>
+
+  <div id="indivSection" class="hidden">
+    <div class="section-head">🧍 個人巡回 分析 / Análise Individual <span id="indivCount"></span></div>
+    <div class="charts">
+      <div class="chart-card">
+        <h3>👤 個人別 遵守率 / Ranking por Pessoa</h3>
+        <div class="chart-canvas-wrap"><canvas id="chartPerson"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🏷 設備・ゾーン別（個人）/ Por Setor</h3>
+        <div class="chart-canvas-wrap"><canvas id="chartSector"></canvas></div>
+      </div>
     </div>
   </div>
 
@@ -355,12 +378,23 @@ function rateClass(rate) {
   return 'danger';
 }
 
+/* registro de 個人巡回? (Tipo contém «個人») */
+function isIndividual(r) { return String(r.Tipo || '').indexOf('個人') >= 0; }
+/* nos registros individuais a coluna Zona vem como «pessoa（setor）» */
+function parsePerson(zona) {
+  const s = String(zona == null ? '' : zona).trim();
+  const m = s.match(/^(.*?)（([^）]*)）\s*$/);
+  if (m) return { person: m[1].trim(), sector: m[2].trim() };
+  return { person: s, sector: '' };
+}
+
 function applyFilters() {
   const recs = getFilteredRecords();
   renderKpis(recs);
   renderTrend(recs);
   renderByZone(recs);
   renderByInspector(recs);
+  renderIndividual(recs);
   renderTopNg(recs);
   renderRecent(recs);
 }
@@ -443,7 +477,7 @@ function avg(arr) {
 function renderByZone(recs) {
   destroyChart('zone');
   const map = {};
-  recs.forEach(r => {
+  recs.filter(r => !isIndividual(r)).forEach(r => {   // individuais têm a pessoa na coluna Zona
     const z = String(r.Zona || '—');
     map[z] = map[z] || [];
     map[z].push(Number(r['Taxa%']) || 0);
@@ -495,6 +529,69 @@ function renderByInspector(recs) {
   });
 }
 
+/* ── 個人巡回: ranking por pessoa e por setor ── */
+function renderIndividual(recs) {
+  const indiv = recs.filter(isIndividual);
+  const section = document.getElementById('indivSection');
+  destroyChart('person');
+  destroyChart('sector');
+
+  if (indiv.length === 0) {
+    section.classList.add('hidden');     // nada de individual no filtro atual
+    return;
+  }
+  section.classList.remove('hidden');
+  document.getElementById('indivCount').textContent =
+    `（${indiv.length} 巡回 / patrulhas individuais）`;
+
+  // agrupa por pessoa e por setor
+  const byPerson = {}, bySector = {};
+  indiv.forEach(r => {
+    const { person, sector } = parsePerson(r.Zona);
+    const rate = Number(r['Taxa%']) || 0;
+    if (person) { (byPerson[person] = byPerson[person] || []).push(rate); }
+    if (sector) { (bySector[sector] = bySector[sector] || []).push(rate); }
+  });
+
+  // PESSOA — barras horizontais, ordenadas por taxa
+  const pEntries = Object.entries(byPerson)
+    .map(([k, arr]) => ({ k, rate: avg(arr), n: arr.length }))
+    .sort((a, b) => b.rate - a.rate);
+  charts.person = new Chart(document.getElementById('chartPerson'), {
+    type: 'bar',
+    data: {
+      labels: pEntries.map(e => `${e.k} (${e.n})`),
+      datasets: [{ label: '平均遵守率', data: pEntries.map(e => e.rate),
+        backgroundColor: pEntries.map(e => e.rate >= 90 ? '#43a047' : e.rate >= 70 ? '#fb8c00' : '#e53935') }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      scales: { x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } },
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => `遵守率 ${c.parsed.x}% / ${pEntries[c.dataIndex].n} patrulhas` } } }
+    }
+  });
+
+  // SETOR — barras horizontais
+  const sEntries = Object.entries(bySector)
+    .map(([k, arr]) => ({ k, rate: avg(arr), n: arr.length }))
+    .sort((a, b) => b.rate - a.rate);
+  charts.sector = new Chart(document.getElementById('chartSector'), {
+    type: 'bar',
+    data: {
+      labels: sEntries.map(e => `${e.k} (${e.n})`),
+      datasets: [{ label: '平均遵守率', data: sEntries.map(e => e.rate),
+        backgroundColor: sEntries.map(e => e.rate >= 90 ? '#43a047' : e.rate >= 70 ? '#fb8c00' : '#e53935') }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      scales: { x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } },
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: c => `遵守率 ${c.parsed.x}% / ${sEntries[c.dataIndex].n} patrulhas` } } }
+    }
+  });
+}
+
 function renderTopNg(recs) {
   const counts = {};
   recs.forEach(r => {
@@ -535,8 +632,9 @@ function renderRecent(recs) {
   }
   tb.innerHTML = sorted.map(r => {
     const rate = Number(r['Taxa%']) || 0;
-    const typeIc = String(r.Tipo).indexOf('安全') >= 0 ? '🦺' : '📦';
-    const typeShort = String(r.Tipo).indexOf('安全') >= 0 ? '安全' : '品質';
+    const indiv = isIndividual(r);
+    const typeIc = indiv ? '🧍' : (String(r.Tipo).indexOf('安全') >= 0 ? '🦺' : '📦');
+    const typeShort = indiv ? '個人' : (String(r.Tipo).indexOf('安全') >= 0 ? '安全' : '品質');
     return `<tr>
       <td>${fmtDate(parseDate(r.Carimbo))}</td>
       <td>${typeIc} ${typeShort}</td>
