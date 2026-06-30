@@ -546,12 +546,22 @@ html, body {
       </div>
       <div class="row2">
         <div class="field">
-          <label>実施日 開始<span class="pt">Início</span></label>
+          <label id="lbl-date-start">実施日 開始<span class="pt">Início</span></label>
           <input type="date" id="f-date-start">
         </div>
-        <div class="field">
+        <div class="field" id="field-date-end">
           <label>実施日 終了<span class="pt">Fim</span></label>
           <input type="date" id="f-date-end">
+        </div>
+      </div>
+      <div class="row2" id="field-times" style="display:none;">
+        <div class="field">
+          <label>開始時刻<span class="pt">Hora início</span></label>
+          <input type="time" id="f-time-start">
+        </div>
+        <div class="field">
+          <label>終了時刻<span class="pt">Hora término</span></label>
+          <input type="time" id="f-time-end">
         </div>
       </div>
       <div class="row2">
@@ -1035,14 +1045,19 @@ async function sendHistoryToSheet(pdfBlob) {
 
   const setorVal = document.getElementById('f-zone').value || '';
   const personVal = (document.getElementById('f-person') || {}).value || '';
+  const isIndiv = currentMode === 'individual';
+  const dVal = document.getElementById('f-date-start').value || '';
+  const tStart = (document.getElementById('f-time-start') || {}).value || '';
+  const tEnd = (document.getElementById('f-time-end') || {}).value || '';
   const payload = {
-    type: currentMode === 'individual' ? data.titleJp + '（個人）' : data.titleJp,
+    type: isIndiv ? data.titleJp + '（個人）' : data.titleJp,
     // no 個人巡回, a coluna Zona recebe a pessoa (+ setor) p/ o dashboard ranquear por pessoa
-    zone: currentMode === 'individual'
+    zone: isIndiv
       ? personVal + (setorVal ? `（${setorVal}）` : '')
       : setorVal,
-    dateStart: document.getElementById('f-date-start').value || '',
-    dateEnd: document.getElementById('f-date-end').value || '',
+    // no 個人巡回, Inicio/Fim recebem data + horário; senão a faixa de datas
+    dateStart: isIndiv ? (dVal + (tStart ? ' ' + tStart : '')) : dVal,
+    dateEnd:   isIndiv ? (dVal + (tEnd ? ' ' + tEnd : '')) : (document.getElementById('f-date-end').value || ''),
     inspector: document.getElementById('f-inspector').value || '',
     leader: document.getElementById('f-leader').value || '',
     total: total, ok: ok, ng: ng, pending: total-ok-ng,
@@ -1237,11 +1252,21 @@ function refreshPersonSelect() {
 function applyModeUI() {
   const fp = document.getElementById('field-person');
   const sub = document.getElementById('topSub');
+  const lblDS = document.getElementById('lbl-date-start');
+  const fieldDE = document.getElementById('field-date-end');
+  const fieldTimes = document.getElementById('field-times');
   if (currentMode === 'individual') {
     if (fp) fp.style.display = '';
+    // 個人巡回: data única (do dia) + horário de início e término
+    if (lblDS) lblDS.innerHTML = '実施日<span class="pt">Data</span>';
+    if (fieldDE) fieldDE.style.display = 'none';
+    if (fieldTimes) fieldTimes.style.display = 'grid';
     if (sub && currentType) sub.textContent = DATA[currentType].titlePt + ' — 個人巡回';
   } else {
     if (fp) fp.style.display = 'none';
+    if (lblDS) lblDS.innerHTML = '実施日 開始<span class="pt">Início</span>';
+    if (fieldDE) fieldDE.style.display = '';
+    if (fieldTimes) fieldTimes.style.display = 'none';
     if (sub && currentType) sub.textContent = DATA[currentType].titlePt;
   }
 }
@@ -1910,11 +1935,31 @@ document.getElementById('btnReset').addEventListener('click', () => {
   if (confirm('全ての入力をリセットしますか？\nLimpar todos os campos?')) resetForm();
 });
 document.getElementById('btnPdf').addEventListener('click', generatePdf);
-document.getElementById('btnWa').addEventListener('click', shareWhatsApp);
+document.getElementById('btnWa').addEventListener('click', saveAndHome);
 
 /* set today's date by default */
 function todayISO(d=new Date()){
   return d.toISOString().slice(0,10);
+}
+/* data LOCAL (calendário do celular) — YYYY-MM-DD */
+function localDateISO(d=new Date()){
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+}
+/* hora local atual — HH:MM */
+function nowHM(d=new Date()){
+  const p = n => String(n).padStart(2,'0');
+  return p(d.getHours()) + ':' + p(d.getMinutes());
+}
+/* No 個人巡回, garante a data de hoje e marca o término = agora (se vazio). */
+function ensureIndividualTimes() {
+  if (currentMode !== 'individual') return;
+  const ds = document.getElementById('f-date-start');
+  const de = document.getElementById('f-date-end');
+  if (ds && !ds.value) ds.value = localDateISO();
+  if (ds && de) de.value = ds.value;                  // mesma data nos dois campos
+  const te = document.getElementById('f-time-end');
+  if (te && !te.value) te.value = nowHM();             // término = agora
 }
 
 /* ============================================================
@@ -1966,6 +2011,15 @@ function startChecklist(type, mode, sector) {
   const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
   document.getElementById('f-date-start').value = todayISO(monday);
   document.getElementById('f-date-end').value = todayISO(sunday);
+
+  // 個人巡回: data = hoje (calendário do celular); hora de início = agora; término em branco
+  if (currentMode === 'individual') {
+    const hoje = localDateISO();
+    document.getElementById('f-date-start').value = hoje;
+    document.getElementById('f-date-end').value = hoje;
+    document.getElementById('f-time-start').value = nowHM();
+    document.getElementById('f-time-end').value = '';
+  }
 
   // show form
   document.getElementById('screen-select').classList.add('hidden');
@@ -2278,6 +2332,8 @@ function buildPdfHtml() {
   const person = (document.getElementById('f-person') || {}).value || '';
   const ds = document.getElementById('f-date-start').value || '';
   const de = document.getElementById('f-date-end').value || '';
+  const ts = (document.getElementById('f-time-start') || {}).value || '';
+  const te = (document.getElementById('f-time-end') || {}).value || '';
   const inspector = document.getElementById('f-inspector').value || '';
   const leader = document.getElementById('f-leader').value || '';
 
@@ -2338,6 +2394,10 @@ function buildPdfHtml() {
   const subjectValue = isIndiv
     ? escapeHtml(person) + (zone ? `（${escapeHtml(zone)}）` : '')
     : escapeHtml(zone);
+  // linha de data: no 個人巡回 mostra a data única + horário início～término
+  const dateRow = isIndiv
+    ? `<div>実施日</div><div>${fmtDate(ds)}　${escapeHtml(ts || '--:--')} ～ ${escapeHtml(te || '--:--')}</div>`
+    : `<div>実施日</div><div>${fmtDate(ds)} ～ ${fmtDate(de)}</div>`;
   return `
     <div class="pdf-header">
       <div class="pdf-title">${pdfTitle}</div>
@@ -2347,7 +2407,7 @@ function buildPdfHtml() {
       </div>
       <div class="pdf-meta">
         <div>${subjectLabel}</div><div>${subjectValue}</div>
-        <div>実施日</div><div>${fmtDate(ds)} ～ ${fmtDate(de)}</div>
+        ${dateRow}
         <div>巡回者</div><div>${escapeHtml(inspector)}</div>
       </div>
     </div>
@@ -2497,12 +2557,15 @@ function buildFilename(ext='pdf') {
     ? document.getElementById('f-person').value
     : document.getElementById('f-inspector').value);
   // Formato: 260508~260512 【A-1】安全巡回（山田太郎）.pdf
+  //  mesmo dia (ex.: 個人巡回) → mostra só uma data
+  const datePart = (ds && ds === de) ? ds : `${ds}~${de}`;
   const p = paren ? `（${paren}）` : '';
-  return `${ds}~${de} 【${bracket}】${t}${p}.${ext}`;
+  return `${datePart} 【${bracket}】${t}${p}.${ext}`;
 }
 
 async function generatePdf() {
   if (!validateBeforeExport()) return;
+  ensureIndividualTimes();   // 個人巡回: registra o término = agora
   showLoading('PDF生成中... / Gerando PDF...');
   try {
     const blob = await renderPdfBlob();
@@ -2565,51 +2628,22 @@ function buildWhatsAppText() {
   return txt;
 }
 
-async function shareWhatsApp() {
+/* SALVAR: gera o PDF, salva na planilha + Drive e volta à tela inicial. */
+async function saveAndHome() {
   if (!validateBeforeExport()) return;
-  showLoading('準備中... / Preparando...');
+  ensureIndividualTimes();   // 個人巡回: marca o término = agora
+  showLoading('PDF生成中... / Gerando PDF...');
   try {
     const blob = await renderPdfBlob();
-    const filename = buildFilename('pdf');
-    const file = new File([blob], filename, { type: 'application/pdf' });
-    const text = buildWhatsAppText();
-
-    // Salva na planilha + Drive ANTES de qualquer compartilhamento/download —
-    // o navigator.share e o a.click() podem interromper requests pendentes.
     showLoading('☁ シート/Drive 保存中... / Salvando na planilha e Drive...');
     await sendHistoryToSheet(blob);
-
-    // Try Web Share API with files (mobile only — lets user pick WhatsApp and attach PDF)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      hideLoading();
-      try {
-        await navigator.share({ files: [file], text, title: filename });
-        toast('共有しました / Compartilhado');
-        return;
-      } catch (e) {
-        if (e.name !== 'AbortError') console.warn(e);
-        return;
-      }
-    }
-
-    // Fallback: download PDF + open WhatsApp Web/App with text
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
     hideLoading();
-
-    const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    setTimeout(() => {
-      if (confirm('PDFをダウンロードしました。\nWhatsAppを開いてPDFを添付してください。\n\nO PDF foi baixado. Abrir o WhatsApp para anexar manualmente?')) {
-        window.open(wa, '_blank');
-      }
-    }, 600);
+    toast('✅ 保存しました / Salvo no Drive');
+    backToSelector();   // volta à tela que seleciona o tipo de patrulha
   } catch (e) {
     console.error(e);
     hideLoading();
-    alert('エラー / Erro: ' + e.message);
+    alert('保存エラー / Erro ao salvar: ' + e.message);
   }
 }
 
