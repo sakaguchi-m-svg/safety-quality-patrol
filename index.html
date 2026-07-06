@@ -939,6 +939,113 @@ let photos = [];               // [[dataUrl,...], ...] per item
 let itemFlat = [];             // flattened item list with category index ref
 let lastScreen = 'select';     // for settings back-nav
 
+/* ============================================================
+   RASCUNHO AUTOMÁTICO — mantém a patrulha em andamento salva
+   no aparelho até apertar "Salvar" (sobrevive a fechar/desligar).
+   ============================================================ */
+const DRAFT_KEY = 'patrulha:draft';
+let _draftTimer;
+
+function gv(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+function saveDraft() {
+  if (!currentType) return;   // nada em andamento
+  const draft = {
+    v: 1,
+    type: currentType, mode: currentMode, sector: currentSector,
+    zone: gv('f-zone'), person: gv('f-person'),
+    inspector: gv('f-inspector'), leader: gv('f-leader'),
+    dateStart: gv('f-date-start'), dateEnd: gv('f-date-end'),
+    timeStart: gv('f-time-start'), timeEnd: gv('f-time-end'),
+    evals: evals, notes: notes, photos: photos,
+    savedAt: Date.now()
+  };
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch (e) {
+    // provável estouro de cota (fotos grandes): salva sem as fotos
+    try {
+      draft.photos = itemFlat.map(() => []);
+      draft.photosDropped = true;
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      console.warn('Rascunho salvo SEM fotos (cota excedida).');
+    } catch (e2) { console.warn('Falha ao salvar rascunho:', e2); }
+  }
+}
+function scheduleDraftSave() {
+  clearTimeout(_draftTimer);
+  _draftTimer = setTimeout(saveDraft, 500);
+}
+function clearDraft() {
+  clearTimeout(_draftTimer);
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+function normalizeArr(arr, n, fill) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const v = Array.isArray(arr) ? arr[i] : undefined;
+    out.push(v !== undefined ? v : (typeof fill === 'function' ? fill() : fill));
+  }
+  return out;
+}
+
+/* Restaura a patrulha em andamento (se houver rascunho salvo). */
+function restoreDraft() {
+  let d;
+  try { d = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) { return false; }
+  if (!d || !d.type) return false;
+
+  currentType = d.type;
+  currentMode = d.mode || 'zone';
+  currentSector = d.sector || '';
+  currentCategories = (currentType === 'quality')
+    ? getQualityCategories(currentSector) : DATA.safety.categories;
+
+  itemFlat = [];
+  currentCategories.forEach((cat, ci) => cat.items.forEach((it, ii) =>
+    itemFlat.push({ catIdx: ci, itemIdx: ii, ...it })));
+  const n = itemFlat.length;
+  evals  = normalizeArr(d.evals,  n, '');
+  notes  = normalizeArr(d.notes,  n, '');
+  photos = normalizeArr(d.photos, n, () => []).map(p => Array.isArray(p) ? p : []);
+
+  document.getElementById('topTitle').textContent = DATA[currentType].titleJp;
+  document.getElementById('btnSwitch').classList.remove('hidden');
+  refreshFormSelects();
+  // sv: adiciona a opção ao <select> se o valor do rascunho não estiver na lista atual
+  const sv = (id, v) => {
+    const el = document.getElementById(id); if (!el) return;
+    v = v || '';
+    if (el.tagName === 'SELECT' && v && ![...el.options].some(o => o.value === v)) {
+      const o = document.createElement('option'); o.value = v; o.textContent = v; el.appendChild(o);
+    }
+    el.value = v;
+  };
+  sv('f-zone', d.zone);
+  refreshPersonSelect();
+  sv('f-person', d.person);
+  sv('f-inspector', d.inspector); sv('f-leader', d.leader);
+  sv('f-date-start', d.dateStart); sv('f-date-end', d.dateEnd);
+  sv('f-time-start', d.timeStart); sv('f-time-end', d.timeEnd);
+  applyModeUI();
+  renderCategories();
+  itemFlat.forEach((f, i) => {
+    const ta = document.querySelector('.note[data-idx="' + i + '"]');
+    if (ta) ta.value = notes[i] || '';
+    refreshItem(i);
+    renderPhotos(i);
+  });
+  document.getElementById('screen-select').classList.add('hidden');
+  document.getElementById('screen-form').classList.remove('hidden');
+  document.getElementById('actionBar').classList.remove('hidden');
+  updateSummary();
+  window.scrollTo(0, 0);
+  toast(d.photosDropped
+    ? '✍️ 巡回を再開（写真は未保存）/ Rascunho retomado (sem fotos)'
+    : '✍️ 巡回を再開 / Rascunho retomado');
+  return true;
+}
+
 const MAX_PHOTOS_PER_ITEM = 3;
 const PHOTO_MAX_DIM = 1024;    // px — resize on the client
 const PHOTO_QUALITY = 0.7;     // JPEG quality
@@ -1226,6 +1333,12 @@ function fillSelect(selectEl, list, currentValue, placeholder) {
     if (v === currentValue) opt.selected = true;
     selectEl.appendChild(opt);
   });
+  // preserva um valor selecionado que não esteja na lista (ex.: rascunho restaurado / sync)
+  if (currentValue && !list.includes(currentValue)) {
+    const opt = document.createElement('option');
+    opt.value = currentValue; opt.textContent = currentValue; opt.selected = true;
+    selectEl.appendChild(opt);
+  }
   if (list.length === 0) {
     const empty = document.createElement('option');
     empty.value = ''; empty.disabled = true;
@@ -1865,7 +1978,14 @@ document.getElementById('f-zone').addEventListener('change', () => {
     reloadCurrentItems();
   }
   if (currentMode === 'individual') refreshPersonSelect();
+  saveDraft();                 // 💾 rascunho (setor/zona)
 });
+/* demais campos do formulário → também salvam rascunho */
+['f-person','f-inspector','f-leader','f-date-start','f-date-end','f-time-start','f-time-end']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('change', saveDraft); el.addEventListener('input', scheduleDraftSave); }
+  });
 
 /* Recarrega itemFlat a partir da lista do setor atual (reseta avaliações). */
 function reloadCurrentItems() {
@@ -1880,6 +2000,7 @@ function reloadCurrentItems() {
   photos = itemFlat.map(() => []);
   renderCategories();
   updateSummary();
+  saveDraft();
 }
 
 /* ============================================================
@@ -2039,6 +2160,7 @@ function startChecklist(type, mode, sector) {
   document.getElementById('actionBar').classList.remove('hidden');
 
   updateSummary();
+  saveDraft();      // 💾 cria o rascunho da nova patrulha
   window.scrollTo(0,0);
 }
 
@@ -2046,6 +2168,7 @@ function backToSelector() {
   currentType = null;
   currentMode = 'zone';
   currentSector = '';
+  clearDraft();     // abandonou a patrulha → descarta o rascunho
   document.getElementById('screen-select').classList.remove('hidden');
   document.getElementById('screen-form').classList.add('hidden');
   document.getElementById('actionBar').classList.add('hidden');
@@ -2064,6 +2187,7 @@ function resetForm() {
   refreshFormSelects();
   renderCategories();
   updateSummary();
+  saveDraft();      // 💾 rascunho reflete o estado resetado
   toast('リセットしました / Resetado');
   window.scrollTo(0,0);
 }
@@ -2131,12 +2255,14 @@ function renderCategories() {
       evals[i] = (evals[i] === v) ? "" : v;
       refreshItem(i);
       updateSummary();
+      saveDraft();               // 💾 rascunho automático
     });
   });
   wrap.querySelectorAll('.note').forEach(ta => {
     ta.addEventListener('input', () => {
       const i = +ta.dataset.idx;
       notes[i] = ta.value;
+      scheduleDraftSave();       // 💾 rascunho (debounce)
     });
   });
   wrap.querySelectorAll('.photo-input').forEach(inp => {
@@ -2158,6 +2284,7 @@ function renderCategories() {
       }
       inp.value = '';
       renderPhotos(i);
+      saveDraft();               // 💾 rascunho (fotos)
     });
   });
 }
@@ -2180,12 +2307,14 @@ function renderPhotos(i) {
     b.onclick = () => {
       photos[+b.dataset.idx].splice(+b.dataset.pi, 1);
       renderPhotos(+b.dataset.idx);
+      saveDraft();               // 💾 rascunho (removeu foto)
     };
   });
   row.querySelectorAll('.photo-cap').forEach(inp => {
     inp.addEventListener('input', () => {
       const pi = +inp.dataset.pi;
       if (photos[i][pi]) photos[i][pi].caption = inp.value;
+      scheduleDraftSave();       // 💾 rascunho (legenda)
     });
   });
   const cnt = document.getElementById('photo-count-'+i);
@@ -2707,6 +2836,9 @@ function hideLoading() {
 /* ============================================================
    AUTO-SYNC ON STARTUP if URL configured
    ============================================================ */
+/* Ao abrir: se havia patrulha em andamento (não salva), retoma de onde parou. */
+try { restoreDraft(); } catch (e) { console.warn('restoreDraft falhou:', e); }
+
 (async function autoSyncOnStartup() {
   if (!isSynced()) return;
   // run silently in background — don't block UI
