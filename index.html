@@ -3,23 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1976d2">
+<title>巡回チェックシート | Patrulha Semanal</title>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PWA — instala como app na tela inicial (iOS e Android)
+     ════════════════════════════════════════════════════════════════ -->
+
+<!-- Android / Chrome -->
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1976d2">
+<link rel="manifest" href="manifest.json">
+
+<!-- iOS / Safari (o Safari ignora manifest.json para ícone/tela cheia — precisa destas tags) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="巡回チェック">
 <meta name="application-name" content="巡回チェック">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
-<link rel="icon" type="image/png" sizes="192x192" href="data:image/png;base64,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">
-<!-- Ícones em ARQUIVO real (iPhone/Safari exige arquivo, não aceita data-URI).
-     Suba estes arquivos JUNTO do index.html no servidor:
-     manifest.json, apple-touch-icon.png, icon-192.png, icon-512.png -->
+
+<!-- ── ÍCONE DO APP — para trocar, é só SUBSTITUIR estes 3 arquivos
+     (mantendo o mesmo nome) na MESMA PASTA do index.html:
+       icon-192.png         192×192px  — ícone Android/Chrome (menor)
+       icon-512.png         512×512px  — ícone Android/Chrome (splash/maior) + base do manifest.json
+       apple-touch-icon.png 180×180px  — ícone iOS/Safari (quadrado, SEM cantos arredondados — o iOS arredonda sozinho)
+     Formato PNG, fundo sólido (não use transparência — iOS preenche com preto).
+     IMPORTANTE: tem que ser um ARQUIVO de verdade — iPhone/Safari não aceita ícone embutido (data-URI). ── -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="apple-touch-icon.png">
-<title>巡回チェックシート | Patrulha Semanal</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -68,6 +79,47 @@ html, body {
 .choice .pt { display: block; font-size: 13px; opacity: .85; margin-top: 6px; margin-left: 46px; }
 .choice.safety { background: linear-gradient(135deg,#fff,#fff8e1); color: #c65c00; border-left: 6px solid #ff9800; }
 .choice.quality { background: linear-gradient(135deg,#fff,#e3f2fd); color: #0d47a1; border-left: 6px solid #2196f3; }
+.lift-resume {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  background: linear-gradient(135deg,#fff,#f3e5f5); border: 1.5px dashed #8e24aa;
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; color: #6a1b9a;
+}
+.lift-resume:active { background: #f3e5f5; }
+.lift-resume .ic { font-size: 26px; }
+.lift-resume .ct { display: flex; flex-direction: column; }
+.lift-resume b { font-size: 14px; }
+.lift-resume .pt { font-size: 12px; opacity: .85; margin-top: 2px; }
+
+.pwa-install {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  background: linear-gradient(135deg,#fff,#e3f2fd); border: 1.5px dashed #1976d2;
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; color: #0d47a1;
+}
+.pwa-install:active { background: #e3f2fd; }
+.pwa-install .ic { font-size: 26px; }
+.pwa-install .ct { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.pwa-install b { font-size: 14px; }
+.pwa-install .pt { font-size: 12px; opacity: .85; margin-top: 2px; }
+.pwa-install-close {
+  flex: 0 0 auto; background: none; border: none; color: #0d47a1; opacity: .6;
+  font-size: 16px; cursor: pointer; padding: 4px 6px; font-family: inherit;
+}
+.pwa-install-close:active { opacity: 1; }
+
+/* ---- modal "como instalar" (PWA) ---- */
+.pwa-install-now {
+  display: block; width: 100%; margin-bottom: 16px; padding: 14px;
+  border: none; border-radius: 12px; background: linear-gradient(135deg,#1976d2,#1565c0);
+  color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+.pwa-install-now:active { opacity: .9; }
+.pwa-steps { margin-bottom: 16px; }
+.pwa-steps-head { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px; }
+.pwa-steps-head .ic { margin-right: 4px; }
+.pwa-steps ol { margin: 0; padding-left: 22px; }
+.pwa-steps li { font-size: 13px; color: #333; line-height: 1.5; margin-bottom: 10px; }
+.pwa-steps li:last-child { margin-bottom: 0; }
+.pwa-steps li .pt { display: block; font-size: 12px; color: #888; margin-top: 2px; }
 
 /* HEADER FORM */
 .section { background: #fff; margin: 12px 0; padding: 14px 16px; border-radius: 0; }
@@ -120,6 +172,17 @@ html, body {
 }
 .item .txt-jp { display: inline-block; font-size: 15px; line-height: 1.5; color: #1a1a1a; width: calc(100% - 36px); }
 .item .txt-pt { display: block; font-size: 15px; color: #1a1a1a; margin-top: 5px; margin-left: 32px; line-height: 1.5; }
+/* 聞き取り (pergunta oral do 5つの約束) — avaliada junto com o item acima */
+.item .txt-sub {
+  margin: 8px 0 0 32px; padding: 8px 10px; background: #f3e5f5;
+  border-left: 3px solid #ab47bc; border-radius: 0 6px 6px 0;
+}
+.item .txt-sub .tag {
+  display: inline-block; font-size: 10px; font-weight: 700; color: #6a1b9a;
+  background: #e1bee7; padding: 1px 7px; border-radius: 8px; margin-bottom: 5px;
+}
+.item .txt-sub .s-jp { display: block; font-size: 14px; color: #1a1a1a; line-height: 1.45; }
+.item .txt-sub .s-pt { display: block; font-size: 14px; color: #1a1a1a; line-height: 1.45; margin-top: 3px; }
 
 .item .controls { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
 .btn-eval {
@@ -178,6 +241,39 @@ html, body {
 .item.has-ok .btn-photo { border-color: #2e7d32; color: #2e7d32; }
 .item.has-ok .btn-photo:active { background: #e8f5e9; }
 .item.has-ok .photo-count { color: #2e7d32; }
+
+/* ---- リフト見極め (新規リフト教育実施記録表) ---- */
+.lift-day { background: #fff; margin: 12px 0; padding: 0; border-radius: 0; overflow: hidden; }
+.lift-day-head {
+  background: linear-gradient(90deg,#e65100,#f57c00);
+  color: #fff; padding: 10px 16px; font-size: 13px; font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.lift-day-head .pt { font-size: 12px; opacity: .9; font-weight: 400; }
+.lift-day-head .lift-day-rate {
+  background: rgba(255,255,255,.22); padding: 3px 8px; border-radius: 10px; font-size: 11px;
+}
+.lift-check { padding: 12px 16px; border-bottom: 1px solid #eee; display: flex; align-items: flex-start; gap: 10px; }
+.lift-check:last-child { border-bottom: none; }
+.lift-check input[type="checkbox"] { width: 22px; height: 22px; margin-top: 2px; flex: 0 0 auto; accent-color: #e65100; }
+.lift-check label { flex: 1; cursor: pointer; }
+.lift-check .txt-jp { display: block; font-size: 15px; color: #1a1a1a; line-height: 1.5; }
+.lift-check .txt-pt { display: block; font-size: 13px; color: #666; margin-top: 3px; line-height: 1.4; }
+.lift-day-extra { padding: 0 16px 14px; }
+.lift-day-extra .note {
+  width: 100%; box-sizing: border-box; border: 1px solid #cfd8dc; border-radius: 8px;
+  padding: 8px 10px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 40px; margin-bottom: 8px;
+}
+/* 5日目 テスト: 3回のタイム計測 + 結果 */
+.lift-attempt { padding: 12px 16px; border-bottom: 1px solid #eee; }
+.lift-attempt:last-child { border-bottom: none; }
+.lift-attempt .a-head { font-size: 13px; font-weight: 700; color: #e65100; margin-bottom: 8px; }
+.lift-attempt .a-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.lift-attempt .a-row input[type="number"] {
+  width: 64px; padding: 8px; border: 1px solid #cfd8dc; border-radius: 8px; font-size: 15px; text-align: center;
+}
+.lift-attempt .a-row label { font-size: 12px; color: #555; }
+.lift-progress { padding: 10px 16px 4px; font-size: 12px; color: #888; }
 
 /* SUMMARY */
 .summary {
@@ -298,6 +394,10 @@ html, body {
 .chooser-opt.zone:active { background: #e3f2fd; }
 .chooser-opt.indiv { border-color: #a5d6a7; }
 .chooser-opt.indiv:active { background: #e8f5e9; }
+.chooser-opt.mikiwame { border-color: #ce93d8; }
+.chooser-opt.mikiwame:active { background: #f3e5f5; }
+.chooser-opt.lift { border-color: #ffb74d; }
+.chooser-opt.lift:active { background: #fff3e0; }
 .chooser-cancel {
   width: 100%; padding: 12px; border: none; background: #f5f5f5; color: #777;
   border-radius: 10px; font-size: 13px; cursor: pointer; font-family: inherit;
@@ -452,6 +552,77 @@ html, body {
 #pdf-render .pdf-summary div { text-align: center; }
 #pdf-render .pdf-summary .v { font-size: 14px; font-weight: 700; }
 
+/* ---- PDF do ピッキング見極め (retrato) — cópia da folha "LIXIL見極め" ---- */
+#pdf-render .mk-title {
+  font-size: 22px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px;
+}
+#pdf-render .mk-ident {
+  font-size: 13px; text-align: right; margin-bottom: 6px;
+}
+#pdf-render .mk-ident u { text-decoration: none; border-bottom: 1px solid #000;
+  padding: 0 14px; margin: 0 4px; font-weight: 700; }
+#pdf-render table.mk {
+  width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;
+}
+#pdf-render table.mk td { border: 1px solid #000; padding: 3px 6px; vertical-align: middle; }
+#pdf-render table.mk .mk-cno { width: 34px; }
+#pdf-render table.mk .mk-cev { width: 62px; }
+#pdf-render table.mk .mk-no  { text-align: center; font-size: 13px; font-weight: 700; }
+#pdf-render table.mk .mk-ev  { text-align: center; font-size: 20px; font-weight: 700; line-height: 1.1; }
+#pdf-render table.mk .mk-ev .d { display: block; font-size: 9px; font-weight: 400; color: #444; }
+#pdf-render table.mk .mk-daterow td { height: 26px; text-align: center; font-size: 11px; }
+#pdf-render table.mk .mk-daterow .mk-l { text-align: left; font-weight: 700; }
+#pdf-render table.mk .mk-legend { font-weight: 400; margin-left: 18px; font-size: 12px; }
+#pdf-render table.mk .mk-head td { background: #f0f0f0; font-weight: 700; text-align: center; }
+#pdf-render table.mk .mk-head .mk-l { text-align: left; }
+#pdf-render table.mk .mk-head .mk-r { float: right; }
+#pdf-render table.mk .mk-sec td {
+  background: #e0e0e0; font-weight: 700; font-size: 14px; text-align: center; letter-spacing: 2px;
+}
+#pdf-render table.mk .mk-jp { font-size: 12.5px; line-height: 1.3; }
+#pdf-render table.mk .mk-pt { font-size: 11px; color: #1a1a1a; line-height: 1.3; }
+#pdf-render table.mk .mk-ask { background: #fafafa; }
+#pdf-render table.mk .mk-ask .mk-jp,
+#pdf-render table.mk .mk-ask .mk-pt { color: #333; }
+#pdf-render table.mk .mk-stamp td { height: 46px; text-align: center; font-weight: 700; }
+#pdf-render .mk-bottom {
+  display: grid; grid-template-columns: 1fr 150px; gap: 10px; margin-top: 10px; align-items: stretch;
+}
+#pdf-render .mk-fubi { border: 1px solid #000; min-height: 96px; }
+#pdf-render .mk-fubi .h {
+  font-size: 12px; font-weight: 700; border-bottom: 1px solid #000; padding: 3px 6px; background: #f0f0f0;
+}
+#pdf-render .mk-fubi .b { font-size: 11px; padding: 5px 7px; line-height: 1.45; }
+#pdf-render .mk-shokucho { border: 1px solid #000; display: grid; grid-template-rows: auto 1fr; text-align: center; }
+#pdf-render .mk-shokucho .h { font-size: 12px; font-weight: 700; border-bottom: 1px solid #000; padding: 3px; letter-spacing: 3px; }
+#pdf-render .mk-shokucho .b { font-size: 13px; padding: 8px 4px; display: flex; align-items: center; justify-content: center; }
+
+/* ---- PDF da リフト見極め (新規リフト教育実施記録表) — retrato ---- */
+#pdf-render .lk-title { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+#pdf-render .lk-sub { font-size: 11px; color: #444; margin-bottom: 8px; }
+#pdf-render table.lk-head {
+  width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px;
+}
+#pdf-render table.lk-head td { border: 1px solid #000; padding: 4px 6px; }
+#pdf-render table.lk-head td.l { background: #f0f0f0; font-weight: 700; width: 110px; }
+#pdf-render table.lk {
+  width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed;
+}
+#pdf-render table.lk th, #pdf-render table.lk td { border: 1px solid #000; padding: 5px 7px; vertical-align: top; }
+#pdf-render table.lk th { background: #f0f0f0; font-weight: 700; text-align: center; }
+#pdf-render table.lk .lk-day { width: 78px; text-align: center; font-weight: 700; font-size: 12px; }
+#pdf-render table.lk .lk-day .lk-pt { display: block; font-weight: 400; font-size: 9px; color: #555; margin-top: 2px; }
+#pdf-render table.lk .lk-photo { width: 46px; text-align: center; font-size: 10px; color: #555; }
+#pdf-render table.lk .lk-chk { margin-bottom: 6px; line-height: 1.35; }
+#pdf-render table.lk .lk-chk:last-child { margin-bottom: 0; }
+#pdf-render table.lk .lk-pt { color: #333; font-size: 9.5px; }
+#pdf-render table.lk .lk-attempt { margin-bottom: 4px; }
+#pdf-render table.lk .lk-attempt:last-child { margin-bottom: 0; }
+#pdf-render .lk-obs { border: 1px solid #000; margin-top: 8px; min-height: 60px; }
+#pdf-render .lk-obs .h { font-size: 11px; font-weight: 700; background: #f0f0f0; border-bottom: 1px solid #000; padding: 3px 6px; }
+#pdf-render .lk-obs .b { font-size: 11px; padding: 6px; white-space: pre-wrap; line-height: 1.4; }
+#pdf-render .lk-decl { margin-top: 10px; font-size: 10px; color: #333; line-height: 1.7; }
+
 /* ---- ITEMS EDITOR ---- */
 .items-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
 .items-tab {
@@ -477,6 +648,13 @@ html, body {
 }
 .ed-fields .ed-pt { font-size: 14px; color: #1a1a1a; }
 .ed-fields input[data-auto="1"] { background: #f1f8e9; border-color: #aed581; }
+/* 聞き取り do 5つの約束 (見極め) */
+.ed-sub {
+  margin-top: 4px; padding: 6px 8px; background: #f3e5f5;
+  border-left: 3px solid #ab47bc; border-radius: 0 6px 6px 0;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.ed-sub-tag { font-size: 10px; font-weight: 700; color: #6a1b9a; }
 .ed-del-item { flex: 0 0 auto; border: none; background: #f5f5f5; color: #9e9e9e;
   border-radius: 8px; padding: 8px 10px; cursor: pointer; align-self: center; }
 .ed-move { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; align-self: center; }
@@ -526,6 +704,21 @@ html, body {
   <div id="screen-select" class="selector">
     <h2>巡回を選択 / Selecione a Patrulha</h2>
     <p class="sub">今週のチェックを開始 / Inicie a checagem desta semana</p>
+    <div id="pwaInstallBanner" class="pwa-install hidden">
+      <span class="ic">📲</span>
+      <span class="ct">
+        <b>アプリとしてインストール</b>
+        <span class="pt">Instalar como aplicativo — toque para ver como</span>
+      </span>
+      <button id="pwaInstallBannerClose" class="pwa-install-close" title="閉じる / Fechar" aria-label="閉じる / Fechar">✕</button>
+    </div>
+    <div id="liftResumeBanner" class="lift-resume hidden">
+      <span class="ic">🚜</span>
+      <span class="ct">
+        <b>リフト見極め が進行中です — タップして再開</b>
+        <span class="pt">Avaliação de empilhadeira em andamento — toque para continuar</span>
+      </span>
+    </div>
     <button class="choice safety" data-type="safety">
       <span class="ic">🦺</span><span class="ttl">安全巡回チェックシート</span>
       <span class="pt">Checklist de Patrulha de Segurança — 21 itens</span>
@@ -548,7 +741,7 @@ html, body {
         <select id="f-zone"></select>
       </div>
       <div class="field" id="field-person" style="display:none;">
-        <label>個人<span class="pt">Pessoa / Funcionário</span></label>
+        <label id="lbl-person">個人<span class="pt">Pessoa / Funcionário</span></label>
         <select id="f-person"></select>
       </div>
       <div class="row2">
@@ -573,7 +766,7 @@ html, body {
       </div>
       <div class="row2">
         <div class="field">
-          <label>巡回者<span class="pt">Inspetor</span></label>
+          <label id="lbl-inspector">巡回者<span class="pt">Inspetor</span></label>
           <select id="f-inspector"></select>
         </div>
         <div class="field">
@@ -598,6 +791,52 @@ html, body {
       </div>
       <div class="cat-summary" id="catSummary"></div>
       <div class="ng-list" id="ngList"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2b : リフト見極め (新規リフト教育実施記録表) — avaliação de vários dias -->
+  <div id="screen-lift" class="hidden">
+    <div class="section">
+      <h3>基本情報 <span style="font-size:11px;color:#888;font-weight:400;">Informações básicas</span></h3>
+      <div class="field">
+        <label>開始日<span class="pt">Data de início</span></label>
+        <input type="date" id="lift-startdate">
+      </div>
+      <div class="field">
+        <label>ゾーン<span class="pt">Zona / Setor</span></label>
+        <select id="lift-zone"></select>
+      </div>
+      <div class="field">
+        <label>受験者（新規社員）<span class="pt">Avaliado(a) — novo(a) funcionário(a)</span></label>
+        <input type="text" id="lift-trainee" placeholder="名前 / Nome">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>確認者<span class="pt">Avaliador</span></label>
+          <select id="lift-inspector"></select>
+        </div>
+        <div class="field">
+          <label>職長<span class="pt">Líder</span></label>
+          <select id="lift-leader"></select>
+        </div>
+      </div>
+    </div>
+
+    <div id="lift-days"></div>
+
+    <div class="section">
+      <h3>備考 <span style="font-size:11px;color:#888;font-weight:400;">Observações</span></h3>
+      <div class="field">
+        <textarea id="lift-obs" rows="3" placeholder="備考 / Observações gerais"></textarea>
+      </div>
+    </div>
+
+    <div class="summary">
+      <h3>📊 進捗 / Progresso</h3>
+      <div class="gauge">
+        <div class="gauge-fill" id="liftGaugeFill" style="width:0%"></div>
+        <div class="gauge-text" id="liftGaugeText">完了 0%</div>
+      </div>
     </div>
   </div>
 
@@ -689,6 +928,7 @@ html, body {
       <div class="items-tabs">
         <button class="items-tab active" data-itype="safety">🦺 安全 / Segurança</button>
         <button class="items-tab" data-itype="quality">📦 品質 / Qualidade</button>
+        <button class="items-tab" data-itype="mikiwame">🎓 見極め</button>
       </div>
       <div id="editSectorRow" style="display:none; margin-bottom:12px;">
         <label style="font-size:12px; color:#2e7d32; font-weight:600;">🏷 設備・ゾーン別リスト / Lista por setor (品質)</label>
@@ -742,7 +982,56 @@ html, body {
       <span class="ic">🧍</span>
       <span class="ct"><b>個人巡回</b><span class="pt">Individual — avalia uma pessoa</span></span>
     </button>
+    <button class="chooser-opt mikiwame" data-mode="mikiwame">
+      <span class="ic">🎓</span>
+      <span class="ct"><b>ピッキング見極め</b><span class="pt">Avaliação de picking — 出荷作業点検表(見極め)</span></span>
+    </button>
     <button class="chooser-cancel" id="chooserCancel">✕ キャンセル / Cancelar</button>
+  </div>
+</div>
+
+<!-- ESCOLHA DO TIPO DE 安全巡回 (ゾーン x リフト見極め) -->
+<div class="chooser" id="safetyModeChooser">
+  <div class="chooser-box">
+    <h3>安全巡回の種類<br><span class="pt">Tipo de patrulha de segurança</span></h3>
+    <button class="chooser-opt zone" data-mode="zone">
+      <span class="ic">🗺</span>
+      <span class="ct"><b>ゾーン巡回</b><span class="pt">Patrulha semanal por zona</span></span>
+    </button>
+    <button class="chooser-opt lift" data-mode="liftmikiwame">
+      <span class="ic">🚜</span>
+      <span class="ct"><b>リフト見極め</b><span class="pt">新規リフト教育実施記録表 — treinamento de empilhadeira (novo funcionário)</span></span>
+    </button>
+    <button class="chooser-cancel" id="safetyChooserCancel">✕ キャンセル / Cancelar</button>
+  </div>
+</div>
+
+<!-- ホーム画面に追加する方法 (PWAインストール手順) -->
+<div class="chooser" id="pwaInstallModal">
+  <div class="chooser-box">
+    <h3>🦺 アプリとして追加<br><span class="pt">Adicionar como aplicativo</span></h3>
+
+    <button class="pwa-install-now hidden" id="pwaInstallNowBtn">
+      📲 今すぐインストール / Instalar agora
+    </button>
+
+    <div class="pwa-steps">
+      <div class="pwa-steps-head"><span class="ic">🍎</span> iPhone / iPad（Safari）</div>
+      <ol>
+        <li>下の <b>共有</b> ボタン（□に↑）をタップ<br><span class="pt">Toque no botão Compartilhar (□↑) na barra do Safari</span></li>
+        <li><b>「ホーム画面に追加」</b>をタップ<br><span class="pt">Toque em "Adicionar à Tela de Início"</span></li>
+      </ol>
+    </div>
+
+    <div class="pwa-steps">
+      <div class="pwa-steps-head"><span class="ic">🤖</span> Android（Chrome）</div>
+      <ol>
+        <li>右上の <b>⋮</b>（3点メニュー）をタップ<br><span class="pt">Toque nos três pontinhos (⋮) no canto superior direito</span></li>
+        <li><b>「アプリをインストール」</b>または<b>「ホーム画面に追加」</b>をタップ<br><span class="pt">Toque em "Instalar aplicativo" ou "Adicionar à tela inicial"</span></li>
+      </ol>
+    </div>
+
+    <button class="chooser-cancel" id="pwaInstallModalClose">✕ 閉じる / Fechar</button>
   </div>
 </div>
 
@@ -835,7 +1124,94 @@ const DEFAULT_DATA = {
         ]
       }
     ]
+  },
+  /* ────────────────────────────────────────────────────────────
+     ピッキング見極め — 出荷作業点検表(見極め)
+     Baseado na folha "LIXIL見極め" de 【原紙】一人立ち見極めテスト.xlsx.
+     Avalia UMA pessoa (受験者). Itens do 5つの約束 têm `sub` = a pergunta
+     oral (聞き取り); a avaliação ○/× vale para o par (item + 聞き取り),
+     igual à planilha, onde a célula de ○/× é mesclada nas 2 linhas.
+     ──────────────────────────────────────────────────────────── */
+  mikiwame: {
+    titleJp: "出荷作業点検表（見極め）",
+    titlePt: "Avaliação de Picking (見極め)",
+    icon: "🎓",
+    categories: [
+      {
+        nameJp: "点検項目",
+        namePt: "Itens de checagem",
+        items: [
+          { jp: "商品がPLの前後左右から落下しないか", pt: "Se os produtos não estão caindo pela frente, atrás ou dos lados do PL" },
+          { jp: "商品に梱包上の異常がないか確認しているか（６面チェック）", pt: "Está verificando se há danificações na embalagem (6 lados)" },
+          { jp: "商品が倒れないか", pt: "Se os produtos não estão tombando" },
+          { jp: "保護材(敷きダンボール・合紙等_ゾーンルールに基づき)をしているか", pt: "Está utilizando material de proteção (papelão, etc., de acordo com as regras do setor)" },
+          { jp: "PLの中でスキャン前の商品とスキャン後の商品を分けて置いているか", pt: "Se separa as peças já escaneadas das peças não escaneadas dentro do PL" },
+          { jp: "取り間違えたら先にロケに戻しているか", pt: "Caso retirar peça errada, se devolve para o roke antes de retirar a próxima" },
+          { jp: "ロケーションに仮置きしていないか", pt: "Se coloca peça já escaneada no roke para arrumar o PL" },
+          { jp: "コース・枝番・個数を漏れなく記入しているか", pt: "Se está correto o kosu, loja e quantidade do papel" }
+        ]
+      },
+      {
+        nameJp: "5つの約束",
+        namePt: "As 5 promessas",
+        items: [
+          { jp: "商品は1本ずつスキャンしているか", pt: "Faz a leitura do código de barras uma por uma",
+            sub: { jp: "(聞き取り)複数商品PKの悪さを理解しているか", pt: "Se sabe o porquê de não poder pegar vários tipos de peças junto" } },
+          { jp: "ロケーション内でスキャンしていないか", pt: "Se não faz a leitura do código de barras dentro do roke",
+            sub: { jp: "(聞き取り)ロケ内でスキャンすることの悪さを理解しているか", pt: "Se sabe o porquê de não poder fazer o ato acima" } },
+          { jp: "スキャン時にエラーが発生した時の対応を適切に行っているか", pt: "Toma atitude correta quando acontecer algo anormal",
+            sub: { jp: "(聞き取り)何が異常内容かを理解しているか", pt: "Se sabe o que é correto e o que é anormal" } },
+          { jp: "作業を中断せず1サイクルで終わらせているか", pt: "Termina a leitura do código de barras antes de parar o trabalho",
+            sub: { jp: "(聞き取り)1サイクルとは何か理解しているか", pt: "Sabe o porquê de não poder parar no meio do trabalho" } },
+          { jp: "ヘッダーシール記載の合計とPKした商品数を照合しているか", pt: "Faz a conferência de quantidade de peças no final",
+            sub: { jp: "(聞き取り)何の為にやっているか理解しているか", pt: "Sabe o porquê de contar o pedido" } }
+        ]
+      }
+    ]
   }
+};
+
+/* ============================================================
+   リフト見極め — 新規リフト教育実施記録表 (15時間＋テスト時間)
+   Baseado na aba "新規リフト教育実施記録表" de 【原紙】一人立ち見極めテスト.xlsx.
+   Diferente dos demais tipos: é um registro de VÁRIOS DIAS (1日目〜6日目),
+   não uma lista plana de itens — por isso tem sua própria estrutura/estado/
+   tela (não usa o motor genérico itemFlat/evals nem o editor de itens ⚙).
+   ============================================================ */
+const LIFT_TRAINING = {
+  titleJp: "新規リフト教育実施記録表",
+  titlePt: "Treinamento de Empilhadeira — Novo Funcionário",
+  subtitleJp: "15時間＋テスト時間",
+  subtitlePt: "15 horas + tempo de teste",
+  icon: "🚜",
+  days: [
+    { key: 'd1', jp: '1日目', pt: 'Dia 1', items: [
+      { jp: '点検表の説明', pt: 'Forma de realizar o TENKEN (checagem do equipamento)' },
+      { jp: 'リフトレバー操作の説明', pt: 'Forma de operar as alavancas' },
+      { jp: 'リフト走行説明', pt: 'Forma de movimentar a empilhadeira' },
+      { jp: '１パレット持ち方', pt: 'Forma de pegar 1 pallet' },
+      { jp: '指差呼称の説明', pt: 'Forma de fazer "soltar a voz e apontar"' },
+      { jp: '歩行者を通る際、声かけ（通ります！）', pt: 'Ao passar pelo pedestre, dizer em voz ("torimasu"), para alertar' }
+    ] },
+    { key: 'd2', jp: '2日目', pt: 'Dia 2', items: [
+      { jp: '２、３パレットの積み方', pt: 'Forma de empilhar o 2º e 3º pallet' },
+      { jp: '指差呼称の説明', pt: 'Forma de fazer "soltar a voz e apontar"' },
+      { jp: '支柱・パレットの合わせ方', pt: 'Forma de alinhar o pilar e o pallet' }
+    ] },
+    { key: 'd3', jp: '3日目', pt: 'Dia 3', items: [
+      { jp: '４、５パレットの積み方', pt: 'Forma de empilhar o 4º e 5º pallet' },
+      { jp: '指差呼称の説明', pt: 'Forma de fazer "soltar a voz e apontar"' },
+      { jp: '支柱・パレットの合わせ方', pt: 'Forma de alinhar o pilar e o pallet' }
+    ] },
+    { key: 'd4', jp: '4日目', pt: 'Dia 4', items: [
+      { jp: '1日目～４日目の練習', pt: 'Treinamento do dia 1 ao dia 4' },
+      { jp: 'テスト時間の説明（必ず10分以内に５パレットを積む事）', pt: 'Explicação do tempo de teste (empilhar 5 PL em menos de 10 min.)' }
+    ] },
+    { key: 'd5', jp: '5日目 テスト', pt: 'Dia 5 — Teste', test: true, attempts: 3 },
+    { key: 'd6', jp: '6日目', pt: 'Dia 6', items: [
+      { jp: '現場実施テスト', pt: 'Teste prático no setor' }
+    ] }
+  ]
 };
 
 /* ============================================================
@@ -850,7 +1226,7 @@ function loadItems() {
     const raw = localStorage.getItem(ITEMS_KEY);
     if (raw) {
       const custom = JSON.parse(raw);
-      ['safety','quality'].forEach(t => {
+      ['safety','quality','mikiwame'].forEach(t => {
         if (custom[t] && Array.isArray(custom[t].categories)) {
           base[t].categories = custom[t].categories;
         }
@@ -862,8 +1238,9 @@ function loadItems() {
 function saveItems() {
   try {
     localStorage.setItem(ITEMS_KEY, JSON.stringify({
-      safety:  { categories: DATA.safety.categories },
-      quality: { categories: DATA.quality.categories }
+      safety:   { categories: DATA.safety.categories },
+      quality:  { categories: DATA.quality.categories },
+      mikiwame: { categories: DATA.mikiwame.categories }
     }));
     flashItemsSaved(true);
   } catch (e) {
@@ -929,8 +1306,8 @@ function allSectors() {
 /* ============================================================
    STATE
    ============================================================ */
-let currentType = null;        // "safety" | "quality"
-let currentMode = 'zone';      // "zone" | "individual" (個人巡回) — só vale p/ quality
+let currentType = null;        // "safety" | "quality" | "mikiwame"
+let currentMode = 'zone';      // "zone" | "individual" (個人巡回) | "mikiwame" (見極め)
 let currentSector = '';        // setor escolhido (品質: define a lista de itens)
 let currentCategories = [];    // lista de itens em uso na patrulha atual
 let evals = [];                // ["", "ok", "ng", ...] one per item
@@ -938,6 +1315,19 @@ let notes = [];                // notes per item
 let photos = [];               // [[dataUrl,...], ...] per item
 let itemFlat = [];             // flattened item list with category index ref
 let lastScreen = 'select';     // for settings back-nav
+
+/* ── Atalhos de modo ── */
+function isMikiwame()  { return currentMode === 'mikiwame'; }
+function isIndividual(){ return currentMode === 'individual'; }
+/* 個人巡回 e 見極め avaliam UMA pessoa em UM dia (data única, sem faixa). */
+function isPersonMode(){ return isIndividual() || isMikiwame(); }
+
+/* Lista de categorias em uso para um tipo/setor. */
+function categoriesFor(type, sector) {
+  if (type === 'mikiwame') return DATA.mikiwame.categories;
+  if (type === 'quality')  return getQualityCategories(sector);
+  return DATA.safety.categories;
+}
 
 /* ============================================================
    RASCUNHO AUTOMÁTICO — mantém a patrulha em andamento salva
@@ -998,8 +1388,7 @@ function restoreDraft() {
   currentType = d.type;
   currentMode = d.mode || 'zone';
   currentSector = d.sector || '';
-  currentCategories = (currentType === 'quality')
-    ? getQualityCategories(currentSector) : DATA.safety.categories;
+  currentCategories = categoriesFor(currentType, currentSector);
 
   itemFlat = [];
   currentCategories.forEach((cat, ci) => cat.items.forEach((it, ii) =>
@@ -1159,15 +1548,20 @@ async function sendHistoryToSheet(pdfBlob) {
 
   const setorVal = document.getElementById('f-zone').value || '';
   const personVal = (document.getElementById('f-person') || {}).value || '';
-  const isIndiv = currentMode === 'individual';
+  const isIndiv = isIndividual();
+  const perPerson = isPersonMode();     // 個人巡回 ou 見極め → data única e pessoa na coluna Zona
   const tStart = (document.getElementById('f-time-start') || {}).value || '';
   const tEnd = (document.getElementById('f-time-end') || {}).value || '';
   const dStart = document.getElementById('f-date-start').value || '';
-  const dEnd = isIndiv ? dStart : (document.getElementById('f-date-end').value || '');  // individual = data única
+  const dEnd = perPerson ? dStart : (document.getElementById('f-date-end').value || '');  // individual/見極め = data única
   const payload = {
-    type: isIndiv ? data.titleJp + '（個人）' : data.titleJp,
-    // no 個人巡回, a coluna Zona recebe a pessoa (+ setor) p/ o dashboard ranquear por pessoa
-    zone: isIndiv
+    // O texto do Tipo precisa conter 品質 — é assim que o Apps Script escolhe
+    // a pasta do Drive (品質巡回 x 安全巡回). Não mudar sem ajustar o .gs.
+    type: isMikiwame() ? '品質巡回チェックシート（ピッキング見極め）'
+        : isIndiv ? data.titleJp + '（個人）'
+        : data.titleJp,
+    // no 個人巡回/見極め, a coluna Zona recebe a pessoa (+ setor) p/ o dashboard ranquear por pessoa
+    zone: perPerson
       ? personVal + (setorVal ? `（${setorVal}）` : '')
       : setorVal,
     // Inicio/Fim recebem data + horário (em todas as patrulhas)
@@ -1348,12 +1742,12 @@ function fillSelect(selectEl, list, currentValue, placeholder) {
 }
 
 function refreshFormSelects() {
-  // No 品質巡回 o campo de zona = SETOR (define a lista de itens). No 安全, zonas normais.
-  const isQuality = currentType === 'quality';
+  // No 品質巡回 / 見極め o campo de zona = SETOR. No 安全, zonas normais.
+  const useSectors = currentType === 'quality' || currentType === 'mikiwame';
   fillSelect(document.getElementById('f-zone'),
-    isQuality ? allSectors() : loadList('zone'),
+    useSectors ? allSectors() : loadList('zone'),
     document.getElementById('f-zone').value,
-    isQuality ? '— 設備/ゾーンを選択 / Selecione o setor —' : '— 選択 / Selecione —');
+    useSectors ? '— 設備/ゾーンを選択 / Selecione o setor —' : '— 選択 / Selecione —');
   fillSelect(document.getElementById('f-inspector'), loadList('inspector'),
     document.getElementById('f-inspector').value, '— 選択 / Selecione —');
   fillSelect(document.getElementById('f-leader'), loadList('leader'),
@@ -1376,9 +1770,24 @@ function applyModeUI() {
   const lblDS = document.getElementById('lbl-date-start');
   const fieldDE = document.getElementById('field-date-end');
   const fieldTimes = document.getElementById('field-times');
+  const lblPerson = document.getElementById('lbl-person');
+  const lblZone = document.getElementById('lbl-zone');
+  const lblInsp = document.getElementById('lbl-inspector');
   // horário de início/término aparece em TODAS as patrulhas
   if (fieldTimes) fieldTimes.style.display = 'grid';
-  if (currentMode === 'individual') {
+  // rótulos padrão (podem ser trocados pelo 見極め abaixo)
+  if (lblPerson) lblPerson.innerHTML = '個人<span class="pt">Pessoa / Funcionário</span>';
+  if (lblInsp)   lblInsp.innerHTML   = '巡回者<span class="pt">Inspetor</span>';
+  if (isMikiwame()) {
+    // 見極め: avalia UMA pessoa (受験者) em UM dia; 巡回者 = 教育者/avaliador
+    if (fp) fp.style.display = '';
+    if (lblPerson) lblPerson.innerHTML = '受験者<span class="pt">Avaliado(a) / 出荷者</span>';
+    if (lblInsp)   lblInsp.innerHTML   = '教育者<span class="pt">Avaliador</span>';
+    if (lblZone)   lblZone.innerHTML   = 'ゾーン<span class="pt">Zona / Setor</span>';
+    if (lblDS) lblDS.innerHTML = '実施日<span class="pt">Data</span>';
+    if (fieldDE) fieldDE.style.display = 'none';
+    if (sub) sub.textContent = 'ピッキング見極め / Avaliação de picking';
+  } else if (isIndividual()) {
     if (fp) fp.style.display = '';
     // 個人巡回: data única (do dia)
     if (lblDS) lblDS.innerHTML = '実施日<span class="pt">Data</span>';
@@ -1606,6 +2015,12 @@ function renderItemsEditor() {
             <div class="ed-fields">
               <input class="ed-jp" data-ci="${ci}" data-ii="${ii}" data-lang="jp" value="${escapeHtml(it.jp||'')}" placeholder="項目 (日本語)">
               <input class="ed-pt" data-ci="${ci}" data-ii="${ii}" data-lang="pt" value="${escapeHtml(it.pt||'')}" placeholder="Item (Português)">
+              ${it.sub ? `
+              <div class="ed-sub">
+                <span class="ed-sub-tag">🗣 聞き取り / pergunta oral</span>
+                <input class="ed-sub-jp" data-ci="${ci}" data-ii="${ii}" data-sub="jp" value="${escapeHtml(it.sub.jp||'')}" placeholder="聞き取り (日本語)">
+                <input class="ed-sub-pt" data-ci="${ci}" data-ii="${ii}" data-sub="pt" value="${escapeHtml(it.sub.pt||'')}" placeholder="Pergunta oral (Português)">
+              </div>` : ''}
             </div>
             <div class="ed-move">
               <button class="ed-up" data-ci="${ci}" data-ii="${ii}" ${(ci===0&&ii===0)?'disabled':''} title="上へ / Subir">▲</button>
@@ -1625,6 +2040,10 @@ function renderItemsEditor() {
 
 /* Acha o campo irmão (idioma oposto) de um input do editor. */
 function siblingField(input) {
+  if (input.dataset.sub) {
+    const box = input.closest('.ed-sub');
+    return box && box.querySelector(input.dataset.sub === 'jp' ? '.ed-sub-pt' : '.ed-sub-jp');
+  }
   if (input.dataset.lang) {
     const box = input.closest('.ed-fields');
     return box && box.querySelector(input.dataset.lang === 'jp' ? '.ed-pt' : '.ed-jp');
@@ -1636,6 +2055,7 @@ function siblingField(input) {
   return null;
 }
 function fieldLang(input) {
+  if (input.dataset.sub)  return input.dataset.sub === 'jp' ? 'ja' : 'pt';
   if (input.dataset.lang) return input.dataset.lang === 'jp' ? 'ja' : 'pt';
   if (input.dataset.fld)  return input.dataset.fld === 'nameJp' ? 'ja' : 'pt';
   return 'pt';
@@ -1647,6 +2067,10 @@ function applyFieldToData(input) {
   if (!cat) return;
   if (input.dataset.fld) {
     cat[input.dataset.fld] = input.value;
+  } else if (input.dataset.sub) {
+    // 聞き取り (só existe nos itens do 5つの約束 do 見極め)
+    const it = cat.items[+input.dataset.ii];
+    if (it) { it.sub = it.sub || { jp: '', pt: '' }; it.sub[input.dataset.sub] = input.value; }
   } else {
     const it = cat.items[+input.dataset.ii];
     if (it) it[input.dataset.lang] = input.value;
@@ -1655,7 +2079,8 @@ function applyFieldToData(input) {
 }
 
 function scheduleTranslate(input) {
-  const key = (input.dataset.ci||'') + '-' + (input.dataset.ii||'c') + '-' + fieldLang(input);
+  const key = (input.dataset.ci||'') + '-' + (input.dataset.ii||'c')
+            + (input.dataset.sub ? '-sub' : '') + '-' + fieldLang(input);
   clearTimeout(translateTimers[key]);
   translateTimers[key] = setTimeout(() => autoTranslateField(input), 900);
 }
@@ -1738,10 +2163,15 @@ function syncDataFromEditorDOM() {
     const ptEl = catEl.querySelector('.ed-cat-pt');
     const items = [];
     catEl.querySelectorAll('.ed-item').forEach(itEl => {
-      items.push({
+      const item = {
         jp: (itEl.querySelector('.ed-jp') || {}).value || '',
         pt: (itEl.querySelector('.ed-pt') || {}).value || ''
-      });
+      };
+      // preserva o 聞き取り ao arrastar/reordenar (itens do 5つの約束)
+      const sJp = itEl.querySelector('.ed-sub-jp');
+      const sPt = itEl.querySelector('.ed-sub-pt');
+      if (sJp || sPt) item.sub = { jp: (sJp||{}).value || '', pt: (sPt||{}).value || '' };
+      items.push(item);
     });
     cats.push({ nameJp: (jpEl || {}).value || '', namePt: (ptEl || {}).value || '', items });
   });
@@ -1855,9 +2285,12 @@ document.getElementById('btnDisconnect').addEventListener('click', () => {
 });
 
 function openSettings() {
-  lastScreen = !document.getElementById('screen-form').classList.contains('hidden') ? 'form' : 'select';
+  lastScreen = !document.getElementById('screen-form').classList.contains('hidden') ? 'form'
+             : !document.getElementById('screen-lift').classList.contains('hidden') ? 'lift'
+             : 'select';
   document.getElementById('screen-select').classList.add('hidden');
   document.getElementById('screen-form').classList.add('hidden');
+  document.getElementById('screen-lift').classList.add('hidden');
   document.getElementById('actionBar').classList.add('hidden');
   document.getElementById('screen-settings').classList.remove('hidden');
   document.getElementById('btnSettings').textContent = '✕';
@@ -1869,7 +2302,16 @@ function openSettings() {
 function closeSettings() {
   document.getElementById('screen-settings').classList.add('hidden');
   document.getElementById('btnSettings').textContent = '⚙';
-  if (lastScreen === 'form' && currentType) {
+  if (lastScreen === 'lift' && currentType === 'liftmikiwame') {
+    document.getElementById('screen-lift').classList.remove('hidden');
+    document.getElementById('actionBar').classList.remove('hidden');
+    document.getElementById('topTitle').textContent = LIFT_TRAINING.titleJp;
+    document.getElementById('topSub').textContent = LIFT_TRAINING.titlePt;
+    // as listas de setor/inspetor/職長 podem ter mudado nas Configurações
+    fillSelect(document.getElementById('lift-zone'), loadList('zone'), liftState.zone, '— 選択 / Selecione —');
+    fillSelect(document.getElementById('lift-inspector'), loadList('inspector'), liftState.inspector, '— 選択 / Selecione —');
+    fillSelect(document.getElementById('lift-leader'), loadList('leader'), liftState.leader, '— 選択 / Selecione —');
+  } else if (lastScreen === 'form' && currentType) {
     document.getElementById('screen-form').classList.remove('hidden');
     document.getElementById('actionBar').classList.remove('hidden');
     const data = DATA[currentType];
@@ -1976,8 +2418,11 @@ document.getElementById('f-zone').addEventListener('change', () => {
   if (currentType === 'quality') {
     currentSector = document.getElementById('f-zone').value || '';
     reloadCurrentItems();
+  } else if (isMikiwame()) {
+    // 見極め usa lista fixa — só guarda o setor (não recarrega os itens)
+    currentSector = document.getElementById('f-zone').value || '';
   }
-  if (currentMode === 'individual') refreshPersonSelect();
+  if (isPersonMode()) refreshPersonSelect();
   saveDraft();                 // 💾 rascunho (setor/zona)
 });
 /* demais campos do formulário → também salvam rascunho */
@@ -1989,9 +2434,7 @@ document.getElementById('f-zone').addEventListener('change', () => {
 
 /* Recarrega itemFlat a partir da lista do setor atual (reseta avaliações). */
 function reloadCurrentItems() {
-  currentCategories = (currentType === 'quality')
-    ? getQualityCategories(currentSector)
-    : DATA.safety.categories;
+  currentCategories = categoriesFor(currentType, currentSector);
   itemFlat = [];
   currentCategories.forEach((cat, ci) => cat.items.forEach((it, ii) =>
     itemFlat.push({ catIdx: ci, itemIdx: ii, ...it })));
@@ -2009,13 +2452,92 @@ function reloadCurrentItems() {
 document.querySelectorAll('.choice').forEach(b => {
   b.addEventListener('click', () => {
     if (b.dataset.type === 'quality') {
-      // 品質巡回: 1º escolhe o SETOR, depois ゾーン巡回 / 個人巡回
+      // 品質巡回: 1º escolhe o SETOR, depois ゾーン巡回 / 個人巡回 / 見極め
       openSectorChooser();
+    } else if (b.dataset.type === 'safety') {
+      // 安全巡回: escolhe ゾーン巡回 / リフト見極め
+      document.getElementById('safetyModeChooser').classList.add('show');
     } else {
       startChecklist(b.dataset.type, 'zone');
     }
   });
 });
+
+/* botões do modal de modo do 安全巡回 (ゾーン / リフト見極め) */
+document.querySelectorAll('#safetyModeChooser .chooser-opt').forEach(b => {
+  b.addEventListener('click', () => {
+    document.getElementById('safetyModeChooser').classList.remove('show');
+    if (b.dataset.mode === 'liftmikiwame') startLiftChecklist();
+    else startChecklist('safety', 'zone');
+  });
+});
+document.getElementById('safetyChooserCancel').addEventListener('click', () => {
+  document.getElementById('safetyModeChooser').classList.remove('show');
+});
+document.getElementById('liftResumeBanner').addEventListener('click', startLiftChecklist);
+
+/* ============================================================
+   PWA — banner "アプリとして追加" + prompt nativo de instalação (Android)
+   No iOS o Safari nunca dispara beforeinstallprompt — por isso o banner
+   aparece de qualquer forma (até ser fechado) e o modal sempre mostra o
+   passo a passo manual; o botão "instalar agora" só aparece quando o
+   Chrome/Android oferece o prompt nativo.
+   ============================================================ */
+const PWA_DISMISS_KEY = 'patrulha:pwaBannerDismissed';
+let deferredInstallPrompt = null;
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function refreshPwaBanner() {
+  const el = document.getElementById('pwaInstallBanner');
+  if (!el) return;
+  let dismissed = false;
+  try { dismissed = localStorage.getItem(PWA_DISMISS_KEY) === '1'; } catch (e) {}
+  el.classList.toggle('hidden', isStandaloneMode() || dismissed);
+}
+function dismissPwaBanner() {
+  try { localStorage.setItem(PWA_DISMISS_KEY, '1'); } catch (e) {}
+  refreshPwaBanner();
+}
+function openPwaInstallModal() {
+  document.getElementById('pwaInstallNowBtn').classList.toggle('hidden', !deferredInstallPrompt);
+  document.getElementById('pwaInstallModal').classList.add('show');
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();    // segura o prompt nativo — só abre quando o usuário tocar no botão
+  deferredInstallPrompt = e;
+  refreshPwaBanner();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  dismissPwaBanner();
+  toast('✅ アプリをインストールしました / Aplicativo instalado');
+});
+
+document.getElementById('pwaInstallBanner').addEventListener('click', (e) => {
+  if (e.target.closest('#pwaInstallBannerClose')) return;
+  openPwaInstallModal();
+});
+document.getElementById('pwaInstallBannerClose').addEventListener('click', (e) => {
+  e.stopPropagation();
+  dismissPwaBanner();
+});
+document.getElementById('pwaInstallModalClose').addEventListener('click', () => {
+  document.getElementById('pwaInstallModal').classList.remove('show');
+});
+document.getElementById('pwaInstallNowBtn').addEventListener('click', async () => {
+  if (!deferredInstallPrompt) return;
+  document.getElementById('pwaInstallModal').classList.remove('show');
+  deferredInstallPrompt.prompt();
+  try {
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') dismissPwaBanner();
+  } catch (e) { /* usuário fechou o prompt — sem problema */ }
+  deferredInstallPrompt = null;
+});
+refreshPwaBanner();
 
 /* ── Seletor de SETOR (品質巡回) ── */
 let pendingSector = '';
@@ -2057,15 +2579,25 @@ document.getElementById('chooserCancel').addEventListener('click', () => {
   document.getElementById('modeChooser').classList.remove('show');
 });
 document.getElementById('btnSwitch').addEventListener('click', () => {
-  if (confirm('別のチェックシートに切替えますか？\n入力中のデータは失われます。\n\nTrocar de checklist? Os dados preenchidos serão perdidos.')) {
-    backToSelector();
-  }
+  // リフト見極めは avaliação de vários dias — o rascunho fica salvo, então sair não perde nada
+  const msg = currentType === 'liftmikiwame'
+    ? '一覧に戻りますか？\n入力内容はこの端末に保存されたままです（続きから再開できます）。\n\nVoltar à lista? Os dados ficam salvos neste aparelho — você pode continuar depois.'
+    : '別のチェックシートに切替えますか？\n入力中のデータは失われます。\n\nTrocar de checklist? Os dados preenchidos serão perdidos.';
+  if (confirm(msg)) backToSelector();
 });
 document.getElementById('btnReset').addEventListener('click', () => {
-  if (confirm('全ての入力をリセットしますか？\nLimpar todos os campos?')) resetForm();
+  if (currentType === 'liftmikiwame') {
+    if (confirm('リフト見極めの入力を全てリセットしますか？\n(全日程が対象です)\n\nLimpar todos os dados da avaliação de empilhadeira (todos os dias)?')) resetLiftForm();
+  } else if (confirm('全ての入力をリセットしますか？\nLimpar todos os campos?')) {
+    resetForm();
+  }
 });
-document.getElementById('btnPdf').addEventListener('click', generatePdf);
-document.getElementById('btnWa').addEventListener('click', saveAndHome);
+document.getElementById('btnPdf').addEventListener('click', () => {
+  if (currentType === 'liftmikiwame') generateLiftPdf(); else generatePdf();
+});
+document.getElementById('btnWa').addEventListener('click', () => {
+  if (currentType === 'liftmikiwame') saveLiftAndHome(); else saveAndHome();
+});
 
 /* set today's date by default */
 function todayISO(d=new Date()){
@@ -2098,15 +2630,17 @@ function ensureTimes() {
    FLOW
    ============================================================ */
 function startChecklist(type, mode, sector) {
+  // ピッキング見極め: sai do 品質巡回 mas usa a própria lista e o próprio PDF
+  if (type === 'quality' && mode === 'mikiwame') type = 'mikiwame';
   currentType = type;
-  currentMode = (type === 'quality' && mode === 'individual') ? 'individual' : 'zone';
-  currentSector = (type === 'quality') ? (sector || '') : '';
+  currentMode = (type === 'mikiwame') ? 'mikiwame'
+              : (type === 'quality' && mode === 'individual') ? 'individual'
+              : 'zone';
+  currentSector = (type === 'safety') ? '' : (sector || '');
   const data = DATA[type];
 
-  // lista de itens em uso: no 品質 = lista do setor; no 安全 = lista padrão
-  currentCategories = (type === 'quality')
-    ? getQualityCategories(currentSector)
-    : DATA.safety.categories;
+  // lista de itens em uso: 見極め = lista fixa; 品質 = lista do setor; 安全 = padrão
+  currentCategories = categoriesFor(type, currentSector);
 
   // populate flat list
   itemFlat = [];
@@ -2127,7 +2661,7 @@ function startChecklist(type, mode, sector) {
   // populate dropdowns from settings
   refreshFormSelects();
   // pré-seleciona o setor escolhido no campo de zona
-  if (type === 'quality' && currentSector) {
+  if (type !== 'safety' && currentSector) {
     document.getElementById('f-zone').value = currentSector;
     refreshPersonSelect();
   }
@@ -2144,8 +2678,8 @@ function startChecklist(type, mode, sector) {
   document.getElementById('f-date-start').value = todayISO(monday);
   document.getElementById('f-date-end').value = todayISO(sunday);
 
-  // 個人巡回: data = hoje (calendário do celular), data única
-  if (currentMode === 'individual') {
+  // 個人巡回 e 見極め: data = hoje (calendário do celular), data única
+  if (isPersonMode()) {
     const hoje = localDateISO();
     document.getElementById('f-date-start').value = hoje;
     document.getElementById('f-date-end').value = hoje;
@@ -2168,15 +2702,17 @@ function backToSelector() {
   currentType = null;
   currentMode = 'zone';
   currentSector = '';
-  clearDraft();     // abandonou a patrulha → descarta o rascunho
+  clearDraft();     // abandonou a patrulha → descarta o rascunho (não afeta o rascunho da リフト見極め, que é outra chave)
   document.getElementById('screen-select').classList.remove('hidden');
   document.getElementById('screen-form').classList.add('hidden');
+  document.getElementById('screen-lift').classList.add('hidden');
   document.getElementById('actionBar').classList.add('hidden');
   document.getElementById('btnSwitch').classList.add('hidden');
   document.getElementById('topTitle').textContent = '巡回チェックシート';
   document.getElementById('topSub').textContent = 'Patrulha Semanal';
   // reset selects
   ['f-zone','f-person','f-inspector','f-leader'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  refreshLiftBanner();
 }
 
 function resetForm() {
@@ -2193,6 +2729,566 @@ function resetForm() {
 }
 
 /* ============================================================
+   リフト見極め — estado, tela, PDF e envio
+   (avaliação de VÁRIOS DIAS — o rascunho fica salvo neste aparelho
+   até apertar 保存/Salvar, mesmo fechando o app entre um dia e outro)
+   ============================================================ */
+const LIFT_DRAFT_KEY = 'patrulha:liftDraft';
+
+function freshLiftState() {
+  const days = {};
+  LIFT_TRAINING.days.forEach(d => {
+    days[d.key] = d.test
+      ? { attempts: Array.from({ length: d.attempts }, () => ({ min: '', sec: '', result: '', photos: [] })) }
+      : { checks: d.items.map(() => false), photos: [] };
+  });
+  return { zone: '', trainee: '', inspector: '', leader: '', startDate: '', obs: '', days };
+}
+
+/* Lê o rascunho salvo, normalizando contra a estrutura atual do LIFT_TRAINING. */
+function loadLiftDraft() {
+  let raw;
+  try { raw = localStorage.getItem(LIFT_DRAFT_KEY); } catch (e) { return null; }
+  if (!raw) return null;
+  let d;
+  try { d = JSON.parse(raw); } catch (e) { return null; }
+  const fresh = freshLiftState();
+  fresh.zone = d.zone || ''; fresh.trainee = d.trainee || ''; fresh.inspector = d.inspector || '';
+  fresh.leader = d.leader || ''; fresh.startDate = d.startDate || ''; fresh.obs = d.obs || '';
+  LIFT_TRAINING.days.forEach(dd => {
+    const saved = d.days && d.days[dd.key];
+    if (!saved) return;
+    if (dd.test) {
+      const att = (Array.isArray(saved.attempts) ? saved.attempts : []).map(a => ({
+        min: a.min || '', sec: a.sec || '', result: a.result || '',
+        photos: Array.isArray(a.photos) ? a.photos : []
+      }));
+      while (att.length < dd.attempts) att.push({ min: '', sec: '', result: '', photos: [] });
+      fresh.days[dd.key].attempts = att.slice(0, dd.attempts);
+    } else {
+      fresh.days[dd.key].checks = dd.items.map((_, i) => !!(saved.checks && saved.checks[i]));
+      fresh.days[dd.key].photos = Array.isArray(saved.photos) ? saved.photos : [];
+    }
+  });
+  return fresh;
+}
+function saveLiftDraft() {
+  if (!liftState) return;
+  try {
+    localStorage.setItem(LIFT_DRAFT_KEY, JSON.stringify(liftState));
+  } catch (e) {
+    // estouro de cota (fotos grandes): salva sem fotos, mantendo checks/textos
+    try {
+      const copy = JSON.parse(JSON.stringify(liftState));
+      Object.values(copy.days).forEach(dv => {
+        if (dv.photos) dv.photos = [];
+        if (dv.attempts) dv.attempts.forEach(a => a.photos = []);
+      });
+      localStorage.setItem(LIFT_DRAFT_KEY, JSON.stringify(copy));
+      console.warn('Rascunho da リフト見極め salvo SEM fotos (cota excedida).');
+    } catch (e2) { console.warn('Falha ao salvar rascunho da リフト見極め:', e2); }
+  }
+  refreshLiftBanner();
+}
+function clearLiftDraft() {
+  try { localStorage.removeItem(LIFT_DRAFT_KEY); } catch (e) {}
+  refreshLiftBanner();
+}
+function hasLiftDraft() {
+  try { return !!localStorage.getItem(LIFT_DRAFT_KEY); } catch (e) { return false; }
+}
+/* Mostra/esconde o banner "avaliação em andamento" na tela inicial. */
+function refreshLiftBanner() {
+  const el = document.getElementById('liftResumeBanner');
+  if (!el) return;
+  const showIt = hasLiftDraft() && currentType !== 'liftmikiwame';
+  el.classList.toggle('hidden', !showIt);
+}
+
+let liftState = null;
+
+function startLiftChecklist() {
+  currentType = 'liftmikiwame';
+  currentMode = 'liftmikiwame';
+  liftState = loadLiftDraft() || freshLiftState();
+  if (!liftState.startDate) liftState.startDate = localDateISO();
+
+  fillSelect(document.getElementById('lift-zone'), loadList('zone'), liftState.zone, '— 選択 / Selecione —');
+  fillSelect(document.getElementById('lift-inspector'), loadList('inspector'), liftState.inspector, '— 選択 / Selecione —');
+  fillSelect(document.getElementById('lift-leader'), loadList('leader'), liftState.leader, '— 選択 / Selecione —');
+  document.getElementById('lift-startdate').value = liftState.startDate;
+  document.getElementById('lift-trainee').value = liftState.trainee;
+  document.getElementById('lift-obs').value = liftState.obs;
+
+  renderLiftDays();
+  updateLiftProgress();
+  saveLiftDraft();
+
+  document.getElementById('topTitle').textContent = LIFT_TRAINING.titleJp;
+  document.getElementById('topSub').textContent = LIFT_TRAINING.titlePt;
+  document.getElementById('screen-select').classList.add('hidden');
+  document.getElementById('screen-lift').classList.remove('hidden');
+  document.getElementById('actionBar').classList.remove('hidden');
+  document.getElementById('btnSwitch').classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+
+/* liga os campos básicos (zona/受験者/確認者/職長/開始日/備考) ao liftState + rascunho */
+['lift-zone','lift-inspector','lift-leader'].forEach(id => {
+  document.getElementById(id).addEventListener('change', e => {
+    const key = id.replace('lift-', '');
+    liftState[key] = e.target.value;
+    saveLiftDraft();
+  });
+});
+document.getElementById('lift-startdate').addEventListener('change', e => { liftState.startDate = e.target.value; saveLiftDraft(); });
+['lift-trainee','lift-obs'].forEach(id => {
+  const key = id.replace('lift-', '');
+  document.getElementById(id).addEventListener('input', () => {
+    liftState[key] = document.getElementById(id).value;
+    saveLiftDraft();
+  });
+});
+
+function renderLiftDays() {
+  const wrap = document.getElementById('lift-days');
+  wrap.innerHTML = '';
+  LIFT_TRAINING.days.forEach(d => {
+    const block = document.createElement('div');
+    block.className = 'lift-day';
+    if (d.test) {
+      block.innerHTML = `
+        <div class="lift-day-head">
+          <div><div>${escapeHtml(d.jp)}</div><div class="pt">${escapeHtml(d.pt)}</div></div>
+          <div class="lift-day-rate" id="lift-rate-${d.key}">—</div>
+        </div>
+        <div id="lift-attempts-${d.key}"></div>
+      `;
+      wrap.appendChild(block);
+      const attWrap = block.querySelector('#lift-attempts-'+d.key);
+      liftState.days[d.key].attempts.forEach((a, ai) => {
+        const row = document.createElement('div');
+        row.className = 'lift-attempt';
+        row.innerHTML = `
+          <div class="a-head">${ai+1}回目 <span style="font-weight:400;color:#888;">(${ai+1}ª tentativa)</span></div>
+          <div class="a-row">
+            <label>分 / min</label>
+            <input type="number" min="0" max="99" class="lift-min" data-day="${d.key}" data-ai="${ai}" value="${a.min}">
+            <label>秒 / seg</label>
+            <input type="number" min="0" max="59" class="lift-sec" data-day="${d.key}" data-ai="${ai}" value="${a.sec}">
+          </div>
+          <div class="controls">
+            <button class="btn-eval ok lift-result" data-day="${d.key}" data-ai="${ai}" data-val="ok">○ OK</button>
+            <button class="btn-eval ng lift-result" data-day="${d.key}" data-ai="${ai}" data-val="ng">× NG</button>
+          </div>
+          <div class="photos-wrap" style="display:block;">
+            <label class="btn-photo">
+              📷 写真追加 / Adicionar foto
+              <input type="file" accept="image/*" capture="environment" multiple class="lift-photo-input" data-day="${d.key}" data-ai="${ai}">
+              <span class="photo-count" id="lift-pc-${d.key}-${ai}"></span>
+            </label>
+            <div class="photos-row" id="lift-photos-${d.key}-${ai}"></div>
+          </div>
+        `;
+        attWrap.appendChild(row);
+      });
+    } else {
+      block.innerHTML = `
+        <div class="lift-day-head">
+          <div><div>${escapeHtml(d.jp)}</div><div class="pt">${escapeHtml(d.pt)}</div></div>
+          <div class="lift-day-rate" id="lift-rate-${d.key}">—</div>
+        </div>
+        <div id="lift-checks-${d.key}"></div>
+        <div class="lift-day-extra">
+          <label class="btn-photo">
+            📷 写真追加 / Adicionar foto
+            <input type="file" accept="image/*" capture="environment" multiple class="lift-photo-input" data-day="${d.key}">
+            <span class="photo-count" id="lift-pc-${d.key}"></span>
+          </label>
+          <div class="photos-row" id="lift-photos-${d.key}"></div>
+        </div>
+      `;
+      wrap.appendChild(block);
+      const checksWrap = block.querySelector('#lift-checks-'+d.key);
+      d.items.forEach((it, ii) => {
+        const row = document.createElement('div');
+        row.className = 'lift-check';
+        const cid = `lift-chk-${d.key}-${ii}`;
+        row.innerHTML = `
+          <input type="checkbox" id="${cid}" class="lift-chk" data-day="${d.key}" data-ii="${ii}" ${liftState.days[d.key].checks[ii] ? 'checked' : ''}>
+          <label for="${cid}">
+            <span class="txt-jp">${escapeHtml(it.jp)}</span>
+            <span class="txt-pt">${escapeHtml(it.pt)}</span>
+          </label>
+        `;
+        checksWrap.appendChild(row);
+      });
+    }
+  });
+
+  // eventos: checkboxes
+  wrap.querySelectorAll('.lift-chk').forEach(cb => {
+    cb.addEventListener('change', () => {
+      liftState.days[cb.dataset.day].checks[+cb.dataset.ii] = cb.checked;
+      updateLiftProgress(); saveLiftDraft();
+    });
+  });
+  // eventos: 分/秒 do teste
+  wrap.querySelectorAll('.lift-min, .lift-sec').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const a = liftState.days[inp.dataset.day].attempts[+inp.dataset.ai];
+      if (inp.classList.contains('lift-min')) a.min = inp.value; else a.sec = inp.value;
+      saveLiftDraft();
+    });
+  });
+  // eventos: ○/× do teste
+  wrap.querySelectorAll('.lift-result').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const a = liftState.days[btn.dataset.day].attempts[+btn.dataset.ai];
+      a.result = (a.result === btn.dataset.val) ? '' : btn.dataset.val;
+      renderLiftDays(); updateLiftProgress(); saveLiftDraft();
+    });
+  });
+  // eventos: fotos (dias normais e tentativas do teste)
+  wrap.querySelectorAll('.lift-photo-input').forEach(inp => {
+    inp.addEventListener('change', async (e) => {
+      const dayKey = inp.dataset.day;
+      const hasAi = inp.dataset.ai !== undefined && inp.dataset.ai !== '';
+      const target = hasAi ? liftState.days[dayKey].attempts[+inp.dataset.ai] : liftState.days[dayKey];
+      const files = Array.from(e.target.files || []);
+      for (const f of files) {
+        if (target.photos.length >= MAX_PHOTOS_PER_ITEM) {
+          toast(`⚠ 最大 ${MAX_PHOTOS_PER_ITEM} 枚 / Máx ${MAX_PHOTOS_PER_ITEM} fotos`);
+          break;
+        }
+        try {
+          const dataUrl = await resizeImage(f, PHOTO_MAX_DIM, PHOTO_QUALITY);
+          target.photos.push({ src: dataUrl, caption: '' });
+        } catch (err) { console.warn(err); toast('画像エラー / Erro na imagem'); }
+      }
+      inp.value = '';
+      renderLiftPhotos(dayKey, hasAi ? +inp.dataset.ai : null);
+      saveLiftDraft();
+    });
+  });
+  LIFT_TRAINING.days.forEach(d => {
+    if (d.test) d.attempts && liftState.days[d.key].attempts.forEach((a, ai) => renderLiftPhotos(d.key, ai));
+    else renderLiftPhotos(d.key, null);
+  });
+}
+
+function liftPhotoTarget(dayKey, ai) {
+  return (ai === null || ai === undefined) ? liftState.days[dayKey] : liftState.days[dayKey].attempts[ai];
+}
+function renderLiftPhotos(dayKey, ai) {
+  const suffix = (ai === null || ai === undefined) ? dayKey : `${dayKey}-${ai}`;
+  const row = document.getElementById('lift-photos-'+suffix);
+  if (!row) return;
+  const target = liftPhotoTarget(dayKey, ai);
+  row.innerHTML = target.photos.map((p, pi) => `
+    <div class="photo-item">
+      <div class="photo-thumb">
+        <img src="${p.src}" alt="">
+        <button class="x" data-suffix="${suffix}" data-pi="${pi}">✕</button>
+      </div>
+      <input class="photo-cap" data-suffix="${suffix}" data-pi="${pi}" placeholder="説明 / legenda" value="${escapeHtml(p.caption||'')}">
+    </div>`).join('');
+  row.querySelectorAll('.x').forEach(b => b.addEventListener('click', () => {
+    liftPhotoTarget(dayKey, ai).photos.splice(+b.dataset.pi, 1);
+    renderLiftPhotos(dayKey, ai); saveLiftDraft();
+  }));
+  row.querySelectorAll('.photo-cap').forEach(inp => inp.addEventListener('input', () => {
+    liftPhotoTarget(dayKey, ai).photos[+inp.dataset.pi].caption = inp.value;
+    saveLiftDraft();
+  }));
+  const cnt = document.getElementById('lift-pc-'+suffix);
+  if (cnt) cnt.textContent = target.photos.length > 0 ? `(${target.photos.length}/${MAX_PHOTOS_PER_ITEM})` : '';
+}
+
+function updateLiftProgress() {
+  let totalItems = 0, doneItems = 0;
+  LIFT_TRAINING.days.forEach(d => {
+    const st = liftState.days[d.key];
+    if (d.test) {
+      totalItems += d.attempts;
+      doneItems += st.attempts.filter(a => a.result).length;
+      const okCount = st.attempts.filter(a => a.result === 'ok').length;
+      const evCount = st.attempts.filter(a => a.result).length;
+      const chip = document.getElementById('lift-rate-'+d.key);
+      if (chip) chip.textContent = evCount > 0 ? `${okCount}/${evCount} ○` : `${d.attempts}回`;
+    } else {
+      totalItems += d.items.length;
+      doneItems += st.checks.filter(Boolean).length;
+      const chip = document.getElementById('lift-rate-'+d.key);
+      if (chip) chip.textContent = `${st.checks.filter(Boolean).length}/${d.items.length}`;
+    }
+  });
+  const rate = totalItems > 0 ? Math.round((doneItems/totalItems)*100) : 0;
+  const fill = document.getElementById('liftGaugeFill');
+  if (fill) {
+    fill.style.width = rate + '%';
+    fill.className = 'gauge-fill';
+    if (rate < 50) fill.classList.add('danger'); else if (rate < 100) fill.classList.add('warn');
+  }
+  const gt = document.getElementById('liftGaugeText');
+  if (gt) gt.textContent = `完了 / Completo: ${rate}%  (${doneItems}/${totalItems})`;
+}
+
+function resetLiftForm() {
+  liftState = freshLiftState();
+  liftState.startDate = localDateISO();
+  document.getElementById('lift-zone').value = '';
+  document.getElementById('lift-trainee').value = '';
+  document.getElementById('lift-inspector').value = '';
+  document.getElementById('lift-leader').value = '';
+  document.getElementById('lift-startdate').value = liftState.startDate;
+  document.getElementById('lift-obs').value = '';
+  renderLiftDays();
+  updateLiftProgress();
+  saveLiftDraft();
+  toast('リセットしました / Resetado');
+  window.scrollTo(0,0);
+}
+
+function validateLiftBeforeExport() {
+  if (!document.getElementById('lift-zone').value.trim()) {
+    toast('⚠ ゾーンを選択 / Selecione a Zona'); document.getElementById('lift-zone').focus(); return false;
+  }
+  if (!document.getElementById('lift-trainee').value.trim()) {
+    toast('⚠ 受験者を入力 / Informe o nome do avaliado(a)'); document.getElementById('lift-trainee').focus(); return false;
+  }
+  if (!document.getElementById('lift-inspector').value.trim()) {
+    toast('⚠ 確認者を選択 / Selecione o avaliador'); document.getElementById('lift-inspector').focus(); return false;
+  }
+  return true;
+}
+
+/* PDF do リフト見極め — reproduz a aba "新規リフト教育実施記録表" do Excel
+   【原紙】一人立ち見極めテスト.xlsx (A4 retrato). */
+function buildLiftPdfHtml() {
+  const zone = document.getElementById('lift-zone').value || '';
+  const trainee = document.getElementById('lift-trainee').value || '';
+  const inspector = document.getElementById('lift-inspector').value || '';
+  const startDate = document.getElementById('lift-startdate').value || '';
+  const obs = document.getElementById('lift-obs').value || '';
+  const fmtMD = iso => iso ? `${+iso.slice(5,7)}/${+iso.slice(8,10)}` : '';
+
+  const dayRows = LIFT_TRAINING.days.map(d => {
+    const st = liftState.days[d.key];
+    let body;
+    if (d.test) {
+      body = st.attempts.map((a, ai) => {
+        const mark = a.result === 'ok' ? '<span class="ev-ok">○</span>' : a.result === 'ng' ? '<span class="ev-ng">×</span>' : '';
+        return `<div class="lk-attempt">${ai+1}回目：${escapeHtml(a.min||'―')}分${escapeHtml(a.sec||'―')}秒　結果 ${mark}</div>`;
+      }).join('');
+    } else {
+      body = d.items.map((it, ii) => {
+        const on = st.checks[ii];
+        return `<div class="lk-chk">${on ? '☑' : '☐'} ${escapeHtml(it.jp)}<br><span class="lk-pt">${escapeHtml(it.pt)}</span></div>`;
+      }).join('');
+    }
+    const photoTotal = d.test
+      ? st.attempts.reduce((s,a)=>s+a.photos.length,0)
+      : st.photos.length;
+    return `<tr>
+      <td class="lk-day">${escapeHtml(d.jp)}<br><span class="lk-pt">${escapeHtml(d.pt)}</span></td>
+      <td class="lk-body">${body}</td>
+      <td class="lk-photo">${photoTotal > 0 ? '📷 '+photoTotal : ''}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="lk-title">${escapeHtml(LIFT_TRAINING.titleJp)}　${escapeHtml(LIFT_TRAINING.subtitleJp)}</div>
+    <div class="lk-sub">${escapeHtml(LIFT_TRAINING.titlePt)} — ${escapeHtml(LIFT_TRAINING.subtitlePt)}</div>
+    <table class="lk-head">
+      <tr><td class="l">開始日 / Início</td><td>${fmtMD(startDate)}</td>
+          <td class="l">ゾーン / Setor</td><td>${escapeHtml(zone)}</td></tr>
+      <tr><td class="l">受験者 / Avaliado(a)</td><td colspan="3">${escapeHtml(trainee)}</td></tr>
+      <tr><td class="l">確認者 / Avaliador</td><td colspan="3">${escapeHtml(inspector)}</td></tr>
+    </table>
+    <table class="lk">
+      <colgroup><col class="lk-day"><col><col class="lk-photo"></colgroup>
+      <thead><tr><th>日</th><th>教育をしたことを記入してください。/ Preencha com o conteúdo que foi ensinado.</th><th>写真</th></tr></thead>
+      <tbody>${dayRows}</tbody>
+    </table>
+    <div class="lk-obs">
+      <div class="h">備考 / Observações</div>
+      <div class="b">${escapeHtml(obs)}</div>
+    </div>
+    <div class="lk-decl">
+      <div>　　/　　/　　上記のルールについてご指導いただきました。</div>
+      <div>Neste dia ＿＿/＿＿/＿＿ finalizo e compreendo os termos e regras acima.</div>
+      <div style="text-align:right; margin-top:6px;">Assinatura: Avaliado (受験者印）＿＿＿＿＿＿＿＿＿＿</div>
+    </div>
+  `;
+}
+
+/* Cartões de evidência fotográfica — um por dia/tentativa que tenha fotos. */
+function buildLiftPhotoCards() {
+  const cards = [];
+  LIFT_TRAINING.days.forEach(d => {
+    const st = liftState.days[d.key];
+    if (d.test) {
+      st.attempts.forEach((a, ai) => {
+        if (a.photos.length) cards.push({ label: `${d.jp} ${ai+1}回目`, labelPt: `${d.pt} — ${ai+1}ª tentativa`, photos: a.photos });
+      });
+    } else if (st.photos.length) {
+      cards.push({ label: d.jp, labelPt: d.pt, photos: st.photos });
+    }
+  });
+  return cards.map((c, n) => {
+    const w = c.photos.length === 1 ? 600 : c.photos.length === 2 ? 440 : 320;
+    const h = Math.round(w * 0.75);
+    return `
+      <div style="font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic',Meiryo,sans-serif; padding:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; margin-bottom:12px; border-bottom:2px solid #e65100;">
+          <h2 style="font-size:16px; margin:0; color:#e65100;">📷 写真エビデンス / Evidência Fotográfica</h2>
+          <span style="font-size:11px; color:#666;">${n+1} / ${cards.length}</span>
+        </div>
+        <div style="margin-bottom:10px; font-size:14px; font-weight:600;">${escapeHtml(c.label)} <span style="font-weight:400; color:#555;">— ${escapeHtml(c.labelPt)}</span></div>
+        <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+          ${c.photos.map(p => `
+            <div style="display:inline-block; text-align:center; vertical-align:top;">
+              <img src="${p.src}" style="width:${w}px; height:${h}px; object-fit:cover; border:1px solid #999; border-radius:4px;">
+              ${p.caption ? `<div style="width:${w}px; font-size:13px; color:#1a1a1a; margin-top:5px; word-break:break-word; line-height:1.35;">${escapeHtml(p.caption)}</div>` : ''}
+            </div>`).join('')}
+        </div>
+      </div>`;
+  });
+}
+
+function buildLiftFilename(ext='pdf') {
+  const sanitize = s => String(s || '').replace(/[\\/:*?"<>|]/g, '_').trim();
+  const fmtShort = iso => iso ? iso.slice(2,4) + iso.slice(5,7) + iso.slice(8,10) : '';
+  const ds = fmtShort(document.getElementById('lift-startdate').value || localDateISO());
+  const de = fmtShort(localDateISO());   // データを確定した日 = hoje
+  const zone = sanitize(document.getElementById('lift-zone').value) || 'zone';
+  const trainee = sanitize(document.getElementById('lift-trainee').value);
+  const datePart = (ds === de) ? ds : `${ds}~${de}`;
+  const p = trainee ? `（${trainee}）` : '';
+  return `${datePart} 【${zone}】リフト見極め${p}.${ext}`;
+}
+
+async function renderLiftPdfBlob() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const mainCanvas = await captureToCanvas(buildLiftPdfHtml(), 800);
+  addCanvasAsPage(pdf, mainCanvas, true);
+  const cards = buildLiftPhotoCards();
+  for (const cardHtml of cards) {
+    const cardCanvas = await captureToCanvas(cardHtml, 800);
+    addCanvasAsPage(pdf, cardCanvas, false);
+  }
+  return pdf.output('blob');
+}
+
+/* Envia o registro (e o PDF, se houver) para a planilha/Drive — mesmo endpoint/aba
+   Historico dos demais tipos. O tipo não contém "品質", então o Apps Script já
+   salva o PDF na pasta do Drive de 安全 (ver getFolderForType no .gs). */
+async function sendLiftHistoryToSheet(pdfBlob) {
+  const url = getSyncUrl();
+  if (!url) return { ok: true, skipped: true };   // não conectado — não bloqueia o salvamento local
+
+  let totalItems = 0, ok = 0, ng = 0, photoCount = 0;
+  const ngItems = [];
+  LIFT_TRAINING.days.forEach(d => {
+    const st = liftState.days[d.key];
+    if (d.test) {
+      totalItems += d.attempts;
+      st.attempts.forEach((a, ai) => {
+        if (a.result === 'ok') ok++;
+        else if (a.result === 'ng') { ng++; ngItems.push({ no: 0, jp: `${d.jp} ${ai+1}回目`, note: `${a.min||'?'}分${a.sec||'?'}秒` }); }
+        photoCount += a.photos.length;
+      });
+    } else {
+      totalItems += d.items.length;
+      ok += st.checks.filter(Boolean).length;
+      photoCount += st.photos.length;
+    }
+  });
+  const pending = totalItems - ok - ng;
+  const evaluated = ok + ng;
+  const rate = evaluated > 0 ? Math.round((ok/evaluated)*100) : 0;
+
+  const zone = document.getElementById('lift-zone').value || '';
+  const trainee = document.getElementById('lift-trainee').value || '';
+  const payload = {
+    type: '安全巡回チェックシート（リフト見極め）',
+    zone: trainee + (zone ? `（${zone}）` : ''),
+    dateStart: document.getElementById('lift-startdate').value || '',
+    dateEnd: localDateISO(),
+    inspector: document.getElementById('lift-inspector').value || '',
+    leader: document.getElementById('lift-leader').value || '',
+    total: totalItems, ok, ng, pending, rate, photoCount, ngItems
+  };
+  if (pdfBlob) {
+    try { payload.pdfBase64 = await blobToBase64(pdfBlob); payload.pdfFilename = buildLiftFilename('pdf'); }
+    catch (e) { console.warn('PDF base64 conversion failed:', e); }
+  }
+  const body = new URLSearchParams({ payload: JSON.stringify(payload) });
+  try {
+    const res = await fetch(url, { method: 'POST', body, redirect: 'follow' });
+    let json;
+    try { json = await res.json(); } catch (_) { json = { ok: false, error: 'Resposta não-JSON' }; }
+    if (json && json.ok) {
+      toast(json.pdfUrl && !String(json.pdfUrl).startsWith('ERRO') ? '☁ シート保存 + 📁 Drive 保存' : '☁ シート保存 / Salvo na planilha');
+      return { ok: true };
+    }
+    toast('⚠ シート未保存 / Não salvo: ' + ((json && json.error) || 'erro desconhecido'));
+    return { ok: false, error: (json && json.error) || 'erro desconhecido' };
+  } catch (e) {
+    toast('⚠ シート未保存 / Falha ao salvar: ' + e.message);
+    return { ok: false, error: e.message };
+  }
+}
+
+async function generateLiftPdf() {
+  if (!validateLiftBeforeExport()) return;
+  showLoading('PDF生成中... / Gerando PDF...');
+  try {
+    const blob = await renderLiftPdfBlob();
+    showLoading('☁ シート/Drive 保存中... / Salvando na planilha e Drive...');
+    await sendLiftHistoryToSheet(blob);
+    showLoading('💾 ダウンロード中... / Baixando PDF...');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = buildLiftFilename('pdf');
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('PDFを保存しました / PDF salvo');
+  } catch (e) {
+    console.error(e);
+    alert('PDF生成エラー / Erro ao gerar PDF: ' + e.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+/* 保存 / Salvar — só apaga o rascunho (finaliza) se o envio à planilha der certo.
+   Se falhar (sem sinal, etc.), o rascunho continua salvo e o usuário pode tentar de novo depois. */
+async function saveLiftAndHome() {
+  if (!validateLiftBeforeExport()) return;
+  showLoading('PDF生成中... / Gerando PDF...');
+  try {
+    const blob = await renderLiftPdfBlob();
+    showLoading('☁ シート/Drive 保存中... / Salvando na planilha e Drive...');
+    const result = await sendLiftHistoryToSheet(blob);
+    hideLoading();
+    if (result.ok) {
+      clearLiftDraft();   // finalizado com sucesso — agora sim pode limpar o rascunho
+      toast('✅ 保存しました / Salvo no Drive');
+      backToSelector();
+    } else {
+      toast('⚠ 保存できませんでした。もう一度お試しください / Não foi possível salvar — os dados continuam aqui, tente novamente.');
+    }
+  } catch (e) {
+    console.error(e);
+    hideLoading();
+    alert('保存エラー / Erro ao salvar: ' + e.message + '\n\nデータはこの端末に保存されたままです / Os dados continuam salvos neste aparelho.');
+  }
+}
+
+/* ============================================================
    RENDER
    ============================================================ */
 function renderCategories() {
@@ -2206,8 +3302,8 @@ function renderCategories() {
     block.innerHTML = `
       <div class="cat-head">
         <div>
-          <div>${cat.nameJp}</div>
-          <div class="pt">${cat.namePt}</div>
+          <div>${escapeHtml(cat.nameJp)}</div>
+          <div class="pt">${escapeHtml(cat.namePt)}</div>
         </div>
         <div class="cat-rate" id="rate-${ci}">—</div>
       </div>
@@ -2227,6 +3323,11 @@ function renderCategories() {
           <span class="num">${globalNo}</span>
           <span class="txt-jp">${escapeHtml(it.jp)}</span>
           <span class="txt-pt">${escapeHtml(it.pt)}</span>
+          ${it.sub ? `<div class="txt-sub">
+            <span class="tag">🗣 聞き取り</span>
+            <span class="s-jp">${escapeHtml(it.sub.jp)}</span>
+            <span class="s-pt">${escapeHtml(it.sub.pt)}</span>
+          </div>` : ''}
         </div>
         <div class="controls">
           <button class="btn-eval ok" data-idx="${flatIdx}" data-val="ok">○ OK</button>
@@ -2326,9 +3427,7 @@ function renderPhotos(i) {
 function rebuildChecklistPreserving() {
   if (!currentType) return;
   // re-busca a lista atual (pode ter sido editada nas Configurações)
-  currentCategories = (currentType === 'quality')
-    ? getQualityCategories(currentSector)
-    : DATA.safety.categories;
+  currentCategories = categoriesFor(currentType, currentSector);
 
   // snapshot do estado atual, indexado pelo texto JP do item
   const prev = {};
@@ -2431,8 +3530,8 @@ function updateSummary() {
     row.className = 'row';
     row.innerHTML = `
       <div>
-        <div class="name">${cat.nameJp}</div>
-        <div class="pt-name">${cat.namePt}</div>
+        <div class="name">${escapeHtml(cat.nameJp)}</div>
+        <div class="pt-name">${escapeHtml(cat.namePt)}</div>
       </div>
       <div class="val">${display}</div>
     `;
@@ -2576,6 +3675,120 @@ function buildPdfHtml() {
   `;
 }
 
+/* ============================================================
+   PDF do ピッキング見極め — reproduz a folha "LIXIL見極め" do Excel
+   【原紙】一人立ち見極めテスト.xlsx (A4 retrato).
+   Estrutura: título / ゾーン名・名前 / linha 日付 + legenda ○× /
+   cabeçalho 点検項目・出荷者 / 8 点検項目 / 5つの約束 (item + 聞き取り,
+   com o ○× mesclado nas 2 linhas) / 確認印 /
+   【不備項目の是正状況】 + selo do 職長.
+   As 2 colunas de avaliação do original são mantidas: a 1ª sai preenchida
+   pelo app, a 2ª fica em branco para a reavaliação na folha impressa.
+   ============================================================ */
+function buildMikiwamePdfHtml() {
+  const zone      = document.getElementById('f-zone').value || '';
+  const person    = (document.getElementById('f-person') || {}).value || '';
+  const inspector = document.getElementById('f-inspector').value || '';
+  const leader    = document.getElementById('f-leader').value || '';
+  const ds        = document.getElementById('f-date-start').value || '';
+  const ts        = (document.getElementById('f-time-start') || {}).value || '';
+  const te        = (document.getElementById('f-time-end') || {}).value || '';
+
+  // 日付 no formato da planilha: 8/24 (mês/dia)
+  const fmtMD = iso => iso ? `${+iso.slice(5,7)}/${+iso.slice(8,10)}` : '';
+
+  const evMark = i => {
+    const v = evals[i];
+    return v === 'ok' ? '<span class="ev-ok">○</span>'
+         : v === 'ng' ? '<span class="ev-ng">×</span>' : '';
+  };
+
+  let rows = '';
+  let noInCat = 0;
+  currentCategories.forEach((cat, ci) => {
+    // cabeçalho de seção a partir da 2ª categoria (＝ 5つの約束 na planilha)
+    if (ci > 0) {
+      rows += `<tr class="mk-sec"><td colspan="4">${escapeHtml(cat.nameJp)}</td></tr>`;
+    }
+    noInCat = 0;
+    itemFlat.forEach((f, idx) => {
+      if (f.catIdx !== ci) return;
+      noInCat++;
+      const span = f.sub ? 2 : 1;
+      rows += `<tr>
+        <td class="mk-no" rowspan="${span}">${noInCat}</td>
+        <td>
+          <div class="mk-jp">${escapeHtml(f.jp)}</div>
+          <div class="mk-pt">${escapeHtml(f.pt)}</div>
+        </td>
+        <td class="mk-ev" rowspan="${span}">${evMark(idx)}</td>
+        <td class="mk-ev" rowspan="${span}"></td>
+      </tr>`;
+      if (f.sub) {
+        rows += `<tr class="mk-ask">
+          <td>
+            <div class="mk-jp">${escapeHtml(f.sub.jp)}</div>
+            <div class="mk-pt">${escapeHtml(f.sub.pt)}</div>
+          </td>
+        </tr>`;
+      }
+    });
+  });
+
+  // 【不備項目の是正状況】 = itens × com a observação escrita no app
+  const fubi = itemFlat
+    .map((f, i) => evals[i] === 'ng'
+      ? `No.${i+1} ${f.jp}${notes[i] ? ' → ' + notes[i] : ''}` : null)
+    .filter(Boolean);
+  // observações escritas em itens ○ entram como nota complementar
+  const okNotes = itemFlat
+    .map((f, i) => (evals[i] === 'ok' && notes[i]) ? `No.${i+1} ${f.jp} → ${notes[i]}` : null)
+    .filter(Boolean);
+  const fubiHtml = (fubi.length || okNotes.length)
+    ? [...fubi, ...okNotes].map(t => escapeHtml(t)).join('<br>')
+    : '';
+
+  return `
+    <div class="mk-title">＝ 出荷作業点検表(見極め) ＝</div>
+    <div class="mk-ident">ゾーン名<u>${escapeHtml(zone)}</u>名前<u>${escapeHtml(person)}</u></div>
+    <table class="mk">
+      <colgroup><col class="mk-cno"><col><col class="mk-cev"><col class="mk-cev"></colgroup>
+      <tbody>
+        <tr class="mk-daterow">
+          <td class="mk-l" colspan="2">日付<span class="mk-legend">出来ている＝○　　出来ていない＝×</span></td>
+          <td>${fmtMD(ds)}</td>
+          <td></td>
+        </tr>
+        <tr class="mk-head">
+          <td class="mk-l" colspan="2">点検項目<span class="mk-r">出荷者</span></td>
+          <td></td>
+          <td></td>
+        </tr>
+        ${rows}
+        <tr class="mk-stamp">
+          <td colspan="2" style="text-align:right;">確認印</td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="mk-bottom">
+      <div class="mk-fubi">
+        <div class="h">【不備項目の是正状況】 / Situação de correção dos itens não conformes</div>
+        <div class="b">${fubiHtml}</div>
+      </div>
+      <div class="mk-shokucho">
+        <div class="h">職 長</div>
+        <div class="b">${escapeHtml(leader)}</div>
+      </div>
+    </div>
+    <div style="margin-top:6px; font-size:10px; color:#333; display:flex; justify-content:space-between;">
+      <span>教育者 / Avaliador: ${escapeHtml(inspector)}</span>
+      <span>実施日 ${escapeHtml(ds)}　${escapeHtml(ts || '--:--')} ～ ${escapeHtml(te || '--:--')}</span>
+    </div>
+  `;
+}
+
 /* Returns an array of HTML strings — one per item (OK or NG) that has photos.
    Each string is meant to be rendered on its own PDF page. */
 function buildPdfPhotoCards() {
@@ -2615,8 +3828,10 @@ function buildPdfPhotoCards() {
 }
 
 /* Capture #pdf-render to canvas after setting innerHTML. */
-async function captureToCanvas(html) {
+async function captureToCanvas(html, width) {
   const target = document.getElementById('pdf-render');
+  // largura da captura: 1100px (paisagem, padrão do CSS) ou a informada (retrato)
+  target.style.width = width ? width + 'px' : '';
   target.innerHTML = html;
   // wait two frames so images and layout settle
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -2665,16 +3880,20 @@ function addCanvasAsPage(pdf, canvas, isFirstPage) {
 
 async function renderPdfBlob() {
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  // 見極め = A4 retrato (como a planilha); patrulhas normais = paisagem
+  const mk = isMikiwame();
+  const pdf = new jsPDF({ orientation: mk ? 'portrait' : 'landscape', unit: 'mm', format: 'a4' });
 
   // Page 1: main checklist (header + table + summary). Always fits one page.
-  const mainCanvas = await captureToCanvas(buildPdfHtml());
+  const mainCanvas = mk
+    ? await captureToCanvas(buildMikiwamePdfHtml(), 800)
+    : await captureToCanvas(buildPdfHtml());
   addCanvasAsPage(pdf, mainCanvas, true);
 
   // Pages 2+: one page per item (OK ou NG) that has photos
   const photoCards = buildPdfPhotoCards();
   for (const cardHtml of photoCards) {
-    const cardCanvas = await captureToCanvas(cardHtml);
+    const cardCanvas = await captureToCanvas(cardHtml, mk ? 800 : undefined);
     addCanvasAsPage(pdf, cardCanvas, false);
   }
 
@@ -2689,19 +3908,20 @@ function buildFilename(ext='pdf') {
   const fmtShort = iso => iso ? iso.slice(2,4) + iso.slice(5,7) + iso.slice(8,10) : '';
   const ds = fmtShort(document.getElementById('f-date-start').value || todayISO());
   const de = fmtShort(document.getElementById('f-date-end').value || document.getElementById('f-date-start').value || todayISO());
-  const isIndiv = currentMode === 'individual';
-  const t = currentType === 'safety' ? '安全巡回'
-          : isIndiv ? '個人品質巡回' : '品質巡回';
+  const perPerson = isPersonMode();   // 個人巡回 ou 見極め → nome da pessoa nos （）
+  const t = isMikiwame() ? 'ピッキング見極め'
+          : currentType === 'safety' ? '安全巡回'
+          : isIndividual() ? '個人品質巡回' : '品質巡回';
   // 【colchete】 e （parênteses）:
-  //  - normal/安全:   【zona/setor】〜巡回（巡回者/inspetor）
-  //  - 個人巡回:      【setor】個人品質巡回（funcionário selecionado）
-  const bracket = sanitize(document.getElementById('f-zone').value) || (isIndiv ? 'setor' : 'zone');
-  const paren = sanitize(isIndiv
+  //  - normal/安全:      【zona/setor】〜巡回（巡回者/inspetor）
+  //  - 個人巡回/見極め:  【setor】〜（pessoa avaliada）
+  const bracket = sanitize(document.getElementById('f-zone').value) || (perPerson ? 'setor' : 'zone');
+  const paren = sanitize(perPerson
     ? document.getElementById('f-person').value
     : document.getElementById('f-inspector').value);
   // Formato: 260508~260512 【A-1】安全巡回（山田太郎）.pdf
-  //  mesmo dia (ex.: 個人巡回) → mostra só uma data
-  const datePart = (ds && ds === de) ? ds : `${ds}~${de}`;
+  //  mesmo dia (個人巡回 / 見極め) → mostra só uma data
+  const datePart = (perPerson || (ds && ds === de)) ? ds : `${ds}~${de}`;
   const p = paren ? `（${paren}）` : '';
   return `${datePart} 【${bracket}】${t}${p}.${ext}`;
 }
@@ -2733,44 +3953,6 @@ async function generatePdf() {
   }
 }
 
-/* ============================================================
-   WHATSAPP SHARE — uses Web Share API for file attach when available
-   ============================================================ */
-function buildWhatsAppText() {
-  const data = DATA[currentType];
-  const zone = document.getElementById('f-zone').value || '-';
-  const ds = document.getElementById('f-date-start').value || '-';
-  const de = document.getElementById('f-date-end').value || '-';
-  const inspector = document.getElementById('f-inspector').value || '-';
-  const leader = document.getElementById('f-leader').value || '-';
-
-  const total = itemFlat.length;
-  const ok = evals.filter(v => v === 'ok').length;
-  const ng = evals.filter(v => v === 'ng').length;
-  const evaluated = ok + ng;
-  const rate = evaluated > 0 ? Math.round((ok/evaluated)*100) : 0;
-
-  let txt = `📋 *${data.titleJp}*\n_${data.titlePt}_\n\n`;
-  txt += `🏷 ゾーン / Zona: ${zone}\n`;
-  txt += `📅 期間 / Período: ${ds} ～ ${de}\n`;
-  txt += `👤 巡回者 / Inspetor: ${inspector}\n`;
-  txt += `👷 職長 / Líder: ${leader}\n\n`;
-  txt += `📊 *結果 / Resultado*\n`;
-  txt += `   遵守率 / Taxa: *${rate}%*\n`;
-  txt += `   ○ ${ok}   × ${ng}   未 ${total-ok-ng}\n`;
-
-  const ngItems = itemFlat.map((f, idx) => evals[idx] === 'ng' ? { ...f, idx } : null).filter(Boolean);
-  if (ngItems.length > 0) {
-    txt += `\n⚠ *不適合項目 / Não Conformes*\n`;
-    ngItems.forEach(it => {
-      txt += `• No.${it.idx+1} ${it.jp}\n`;
-      if (notes[it.idx]) txt += `   📝 ${notes[it.idx]}\n`;
-    });
-  }
-  txt += `\n📎 PDFを添付してください / Anexe o PDF.`;
-  return txt;
-}
-
 /* SALVAR: gera o PDF, salva na planilha + Drive e volta à tela inicial. */
 async function saveAndHome() {
   if (!validateBeforeExport()) return;
@@ -2795,17 +3977,19 @@ async function saveAndHome() {
    ============================================================ */
 function validateBeforeExport() {
   if (!document.getElementById('f-zone').value.trim()) {
-    toast(currentMode === 'individual' ? '⚠ 設備/ゾーンを選択 / Selecione o setor' : '⚠ ゾーンを選択 / Selecione a Zona');
+    toast(isPersonMode() ? '⚠ 設備/ゾーンを選択 / Selecione o setor' : '⚠ ゾーンを選択 / Selecione a Zona');
     document.getElementById('f-zone').focus();
     return false;
   }
-  if (currentMode === 'individual' && !document.getElementById('f-person').value.trim()) {
-    toast('⚠ 個人を選択 / Selecione a Pessoa');
+  if (isPersonMode() && !document.getElementById('f-person').value.trim()) {
+    toast(isMikiwame() ? '⚠ 受験者を選択 / Selecione a pessoa avaliada'
+                       : '⚠ 個人を選択 / Selecione a Pessoa');
     document.getElementById('f-person').focus();
     return false;
   }
   if (!document.getElementById('f-inspector').value.trim()) {
-    toast('⚠ 巡回者を選択 / Selecione o Inspetor');
+    toast(isMikiwame() ? '⚠ 教育者を選択 / Selecione o avaliador'
+                       : '⚠ 巡回者を選択 / Selecione o Inspetor');
     document.getElementById('f-inspector').focus();
     return false;
   }
@@ -2834,10 +4018,22 @@ function hideLoading() {
 }
 
 /* ============================================================
+   PWA — registra o Service Worker (permite instalar e abrir offline)
+   ============================================================ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .catch((err) => console.warn('[sw] falha ao registrar:', err));
+  });
+}
+
+/* ============================================================
    AUTO-SYNC ON STARTUP if URL configured
    ============================================================ */
 /* Ao abrir: se havia patrulha em andamento (não salva), retoma de onde parou. */
 try { restoreDraft(); } catch (e) { console.warn('restoreDraft falhou:', e); }
+/* リフト見極め: só mostra o banner de retomada — a tela só abre quando o usuário toca nele. */
+try { refreshLiftBanner(); } catch (e) { console.warn('refreshLiftBanner falhou:', e); }
 
 (async function autoSyncOnStartup() {
   if (!isSynced()) return;
