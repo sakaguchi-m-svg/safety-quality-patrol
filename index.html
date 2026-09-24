@@ -499,7 +499,13 @@ html, body {
   width: 1100px; background: #fff; padding: 14px;
   font-family: "Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
   color: #000;
+  /* Android/Chrome às vezes "infla" o tamanho da fonte de texto curto (números,
+     ○/×) de forma diferente do texto longo ao redor, mesmo fora da tela — isso
+     é o que geralmente causa números/letras "desalinhados" só no celular. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
+#pdf-render * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 #pdf-render .pdf-header {
   display: grid; grid-template-columns: 280px 70px 1fr; gap: 6px;
   margin-bottom: 8px; align-items: stretch;
@@ -584,6 +590,10 @@ html, body {
 #pdf-render table.mk .mk-ask { background: #fafafa; }
 #pdf-render table.mk .mk-ask .mk-jp,
 #pdf-render table.mk .mk-ask .mk-pt { color: #333; }
+/* simula a célula mesclada (número/avaliação) das 5つの約束 sem usar rowspan
+   — some com a borda entre as 2 linhas pra parecer uma célula só */
+#pdf-render table.mk .mk-merge-top { border-bottom: none; }
+#pdf-render table.mk .mk-merge-bottom { border-top: none; background: #fff; }
 #pdf-render table.mk .mk-stamp td { height: 46px; text-align: center; font-weight: 700; }
 #pdf-render .mk-bottom {
   display: grid; grid-template-columns: 1fr 150px; gap: 10px; margin-top: 10px; align-items: stretch;
@@ -3714,22 +3724,30 @@ function buildMikiwamePdfHtml() {
     itemFlat.forEach((f, idx) => {
       if (f.catIdx !== ci) return;
       noInCat++;
-      const span = f.sub ? 2 : 1;
+      // OBS: não usamos rowspan aqui — o html2canvas (biblioteca que rasteriza
+      // o PDF) renderiza o texto dentro de células com rowspan num tamanho bem
+      // menor que o real (bug da lib, não do CSS). A "mescla" visual do
+      // número/avaliação nas 2 linhas (item + 聞き取り) é só borda: a célula
+      // de baixo fica vazia e sem borda de cima, parecendo uma célula só.
+      const merged = !!f.sub;
       rows += `<tr>
-        <td class="mk-no" rowspan="${span}">${noInCat}</td>
+        <td class="mk-no${merged ? ' mk-merge-top' : ''}">${noInCat}</td>
         <td>
           <div class="mk-jp">${escapeHtml(f.jp)}</div>
           <div class="mk-pt">${escapeHtml(f.pt)}</div>
         </td>
-        <td class="mk-ev" rowspan="${span}">${evMark(idx)}</td>
-        <td class="mk-ev" rowspan="${span}"></td>
+        <td class="mk-ev${merged ? ' mk-merge-top' : ''}">${evMark(idx)}</td>
+        <td class="mk-ev${merged ? ' mk-merge-top' : ''}"></td>
       </tr>`;
       if (f.sub) {
         rows += `<tr class="mk-ask">
+          <td class="mk-no mk-merge-bottom"></td>
           <td>
             <div class="mk-jp">${escapeHtml(f.sub.jp)}</div>
             <div class="mk-pt">${escapeHtml(f.sub.pt)}</div>
           </td>
+          <td class="mk-ev mk-merge-bottom"></td>
+          <td class="mk-ev mk-merge-bottom"></td>
         </tr>`;
       }
     });
